@@ -1,31 +1,29 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include "string.h"
 #include "errors.h"
-#include "big_int.h"
 #include "big_float.h"
 
-int main()
+int main(void)
 {
     setbuf(stdout, NULL);
 
-    char input[MAX_IN_STR_LNG + 1];
-
-    if (fgets(input, sizeof(input), stdin) == NULL)
-        return 1;
-
-    if (input[strlen(input) - 1] != '\n')
-        return ERR_STRING_TOO_LONG;
-
-    input[strlen(input) - 1] = '\0';
-
-    big_float_t value;
-
     int error;
+    big_float_t dividend;
 
-    if ((error = str_to_big_float_t(&value, input)) != OK)
+    if ((error = input_big_float(&dividend)) != EXIT_SUCCESS)
         return error;
 
-    print_big_float(value);
+    big_float_t divider = empty();
+
+    if ((error = input_big_float(&divider)) != EXIT_SUCCESS)
+        return error;
+
+    big_float_t result = empty();
+
+    divide_big_float(dividend, divider, &result);
+
+    print_big_float(result);
 
     return OK;
 }

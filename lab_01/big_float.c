@@ -8,13 +8,13 @@
 
 int is_float(const char *str)
 {
-    regex_t int_regex;
-
-    if ((regcomp(&int_regex, FLOAT_REGEX, REG_EXTENDED)) != OK)
-        exit(ERR_REGEX_COMP);
-
-    if (regexec(&int_regex, str, 0, NULL, 0) != OK)
-        return 0;
+//    regex_t int_regex;
+//
+//    if ((regcomp(&int_regex, FLOAT_REGEX, REG_EXTENDED)) != OK)
+//        exit(ERR_REGEX_COMP);
+//
+//    if (regexec(&int_regex, str, 0, NULL, 0) != OK)
+//        return 0;
 
     return 1;
 }
@@ -34,6 +34,7 @@ void set_sign(const char *str, size_t *pos, int *field)
     else
         *field = 1;
 }
+
 void shift_arr_left(int *arr, const int from, const int arr_sz)
 {
     for (int i = from; i < arr_sz; i++)
@@ -58,8 +59,6 @@ int is_zero(big_float_t elem)
 void set_zero(big_float_t *elem)
 {
     elem->sign = 1;
-    elem->digits[0] = 0;
-    elem->digits[1] = 0;
     elem->mantissa_lng = 2;
     elem->exp_value = 1;
 }
@@ -82,14 +81,27 @@ void trim(big_float_t *elem)
     (elem->exp_value)++;
 }
 
+big_float_t empty()
+{
+    big_float_t elem;
+    elem.sign = 1;
+    elem.mantissa_lng = 0;
+    elem.exp_value = 0;
+
+    for (size_t i = 0; i < MAX_MANTISSA_LNG; i++)
+        elem.digits[i] = 0;
+
+    return elem;
+}
+
 int str_to_big_float_t(big_float_t *dest, const char *str) {
     if (!is_float(str))
         return ERR_INVALID_FLOAT_FORMAT;
 
+    *dest = empty();
     size_t pos = 0;
     set_sign(str, &pos, &(dest->sign));
 
-    dest->mantissa_lng = 0;
     int nums_before_dot = 0;
 
     for (; isdigit((unsigned char)str[pos]); pos++, (dest->mantissa_lng)++, nums_before_dot++)
@@ -112,8 +124,6 @@ int str_to_big_float_t(big_float_t *dest, const char *str) {
             dest->digits[dest->mantissa_lng] = str[pos] - ZERO_ASCII_CODE;
         }
     }
-
-    dest->exp_value = 0;
 
     if (str[pos] == 'e' || str[pos] == 'E')
     {
@@ -147,4 +157,150 @@ void print_big_float(const big_float_t elem)
         printf("%d", elem.digits[i]);
 
     printf("e%c%d\n", (elem.exp_value >= 0 ) ? '+' : '-', abs(elem.exp_value));
+}
+
+int add_mantissas(const int *first, const int *second, int *result)
+{
+    int trans = 0;
+
+    for (int i = MAX_MANTISSA_LNG - 1; i >= 0; i--)
+    {
+        int part_sum = first[i] + second[i] + trans;
+
+        if (part_sum >= 10)
+        {
+            trans = 1;
+            part_sum -= 10;
+        }
+        else
+            trans = 0;
+
+        result[i] = part_sum;
+    }
+
+    return EXIT_SUCCESS;
+}
+
+int mantissa_cmp(const int *first, const int *second)
+{
+    for (int i = 0; i < MAX_MANTISSA_LNG; i++)
+        if (first[i] != second[i])
+            return first[i] - second[i];
+
+    return 0;
+}
+
+void arr_cpy(const int *src, int *dest, const int sz)
+{
+    for (int i = 0; i < sz; i++)
+        dest[i] = src[i];
+}
+
+int subtract_mantissas(const int *fir, const int *sec, int *result)
+{
+    int first[MAX_MANTISSA_LNG], second[MAX_MANTISSA_LNG];
+    arr_cpy(fir, first, MAX_MANTISSA_LNG);
+    arr_cpy(sec, second, MAX_MANTISSA_LNG);
+
+    for (int i = 0; i < MAX_MANTISSA_LNG; i++)
+        result[i] = 0;
+
+    for (int i = MAX_MANTISSA_LNG - 1; i >= 0; i--)
+    {
+        int part_diff = first[i] - second[i];
+
+        if (part_diff < 0)
+        {
+            first[i - 1]--;
+            part_diff = 10 + first[i] - second[i];
+        }
+
+        result[i] = part_diff;
+    }
+
+    return EXIT_SUCCESS;
+}
+
+int divide_big_float(const big_float_t dividend, const big_float_t divider,
+big_float_t *result)
+{
+    // exp
+    result->exp_value = dividend.exp_value - divider.exp_value;
+    result->sign = dividend.sign * divider.sign;
+
+    if (result->exp_value < MIN_EXP_VALUE || result->exp_value > MAX_EXP_VALUE)
+        return ERR_DIVISION_EXP_VALUE;
+
+    // copy to pass const
+    int dividend_digits[MAX_MANTISSA_LNG] = { 0 };
+    arr_cpy(dividend.digits, dividend_digits, MAX_MANTISSA_LNG);
+    int divider_digits[MAX_MANTISSA_LNG] = { 0 };
+    arr_cpy(divider.digits, divider_digits, MAX_MANTISSA_LNG);
+
+    // to store new value
+    int result_digits[MAX_MANTISSA_LNG] = { 0 };
+    int result_pos = 0;
+
+    for (; result_pos < MAX_MANTISSA_LNG; result_pos++)
+    {
+        int cur_mantissa[MAX_MANTISSA_LNG] = { 0 };
+        int cur_factor = 0;
+        int cmp;
+        add_mantissas(cur_mantissa, divider_digits, cur_mantissa);
+
+        while ((cmp = mantissa_cmp(dividend_digits, cur_mantissa)) > 0)
+        {
+            add_mantissas(cur_mantissa, divider_digits, cur_mantissa);
+            cur_factor++;
+        }
+
+        // to make factor 1 less
+        subtract_mantissas(cur_mantissa, divider_digits, cur_mantissa);
+
+        subtract_mantissas(dividend_digits, cur_mantissa, dividend_digits);
+
+        result_digits[result_pos] = cur_factor;
+
+        if (cmp == 0)
+        {
+            result_digits[result_pos]++;
+            break;
+        }
+
+        if (dividend_digits[0] == 0)
+            shift_arr_left(dividend_digits, 0, MAX_MANTISSA_LNG);
+        else
+            exit(10);
+    }
+
+    arr_cpy(result_digits, result->digits, MAX_MANTISSA_LNG);
+
+    for (int i = MAX_MANTISSA_LNG - 1; i >= 0; i--)
+        if (result_digits[i] != 0)
+        {
+            result->mantissa_lng = i + 1;
+            break;
+        }
+
+    return EXIT_SUCCESS;
+}
+
+int input_big_float(big_float_t *dest)
+{
+    char input[MAX_IN_STR_LNG + 1];
+
+    if (fgets(input, sizeof(input), stdin) == NULL)
+        return 1;
+
+    if (input[strlen(input) - 1] != '\n')
+        return ERR_STRING_TOO_LONG;
+
+    input[strlen(input) - 1] = '\0';
+
+    int error;
+
+    if ((error = str_to_big_float_t(dest, input)) != OK)
+        return error;
+
+    return EXIT_SUCCESS;
 }
