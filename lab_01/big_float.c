@@ -19,7 +19,7 @@ int is_float(const char *str)
     return 1;
 }
 
-void set_sign(const char *str, int *pos, int *field)
+void set_sign(const char *str, size_t *pos, int *field)
 {
     if (str[*pos] == '+')
     {
@@ -86,13 +86,13 @@ int str_to_big_float_t(big_float_t *dest, const char *str) {
     if (!is_float(str))
         return ERR_INVALID_FLOAT_FORMAT;
 
-    int pos = 0;
+    size_t pos = 0;
     set_sign(str, &pos, &(dest->sign));
 
     dest->mantissa_lng = 0;
     int nums_before_dot = 0;
 
-    for (; isdigit(str[pos]); pos++, (dest->mantissa_lng)++, nums_before_dot++)
+    for (; isdigit((unsigned char)str[pos]); pos++, (dest->mantissa_lng)++, nums_before_dot++)
     {
         if (dest->mantissa_lng >= MAX_MANTISSA_LNG)
             return ERR_INVALID_FLOAT_FORMAT;
@@ -104,7 +104,7 @@ int str_to_big_float_t(big_float_t *dest, const char *str) {
     {
         pos++;
 
-        for (; isdigit(str[pos]); pos++, (dest->mantissa_lng)++)
+        for (; isdigit((unsigned char)str[pos]); pos++, (dest->mantissa_lng)++)
         {
             if (dest->mantissa_lng >= MAX_MANTISSA_LNG)
                 return ERR_INVALID_FLOAT_FORMAT;
@@ -122,7 +122,7 @@ int str_to_big_float_t(big_float_t *dest, const char *str) {
         pos++;
         set_sign(str, &pos, &exp_sign);
 
-        for (; isdigit(str[pos]); pos++)
+        for (; isdigit((unsigned char)str[pos]); pos++)
             dest->exp_value = dest->exp_value * 10 + str[pos] - ZERO_ASCII_CODE;
 
         dest->exp_value *= exp_sign;
