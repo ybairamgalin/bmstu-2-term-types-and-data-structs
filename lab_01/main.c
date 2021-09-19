@@ -2,6 +2,7 @@
 #include "string.h"
 #include "errors.h"
 #include "big_int.h"
+#include "big_float.h"
 
 int main()
 {
@@ -17,15 +18,14 @@ int main()
 
     input[strlen(input) - 1] = '\0';
 
-    int error;
-    big_int_t value;
+    big_float_t value;
 
-    if ((error = str_to_big_int_t(&value, input)) != OK)
+    int error;
+
+    if ((error = str_to_big_float_t(&value, input)) != OK)
         return error;
 
-    print_big_int(value);
-    big_int_t_to_str(input, value);
-    printf("%s", input);
+    print_big_float(value);
 
     return OK;
 }

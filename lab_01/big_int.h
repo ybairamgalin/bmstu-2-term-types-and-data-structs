@@ -11,7 +11,8 @@
 typedef struct
 {
     int sign;
-    char digits[MAX_MANTISSA_LNG + 1];
+    int digits[MAX_MANTISSA_LNG + 1];
+    int mantissa_lng;
 } big_int_t;
 
 int str_to_big_int_t(big_int_t *dest, const char *str);

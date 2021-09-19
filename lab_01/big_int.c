@@ -44,9 +44,8 @@ int str_to_big_int_t(big_int_t *dest, const char *str)
             return ERR_INT_TOO_LONG;
 
         dest->digits[i] = str[pos] - ZERO_ASCII_CODE;
+        dest->mantissa_lng = i + 1;
     }
-
-    dest->digits[pos] = '\0';
 
     return OK;
 }
@@ -56,7 +55,10 @@ void print_big_int(const big_int_t elem)
     if (elem.sign == -1)
         printf("-");
 
-    printf("%s\n", elem.digits);
+    for (int i = 0; i < elem.mantissa_lng; i++)
+        printf("%d", elem.digits[i]);
+
+    printf("\n");
 }
 
 void big_int_t_to_str(char *dest, const big_int_t src)
@@ -66,7 +68,7 @@ void big_int_t_to_str(char *dest, const big_int_t src)
     if (src.sign == -1)
         dest[pos++] = '-';
 
-    for (int i = 0; i < strlen(src.digits); i++, pos++)
+    for (int i = 0; i < src.mantissa_lng; i++, pos++)
         dest[pos] = src.digits[i] + ZERO_ASCII_CODE;
 
     dest[pos] = '\0';
