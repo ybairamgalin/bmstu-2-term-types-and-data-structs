@@ -8,13 +8,26 @@
 
 int is_float(const char *str)
 {
-//    regex_t int_regex;
-//
-//    if ((regcomp(&int_regex, FLOAT_REGEX, REG_EXTENDED)) != OK)
-//        exit(ERR_REGEX_COMP);
-//
-//    if (regexec(&int_regex, str, 0, NULL, 0) != OK)
-//        return 0;
+    regex_t float_regex;
+
+    if ((regcomp(&float_regex, FLOAT_REGEX, REG_EXTENDED)) != OK)
+        exit(ERR_REGEX_COMP);
+
+    if (regexec(&float_regex, str, 0, NULL, 0) != OK)
+        return 0;
+
+    return 1;
+}
+
+int is_int(const char *str)
+{
+    regex_t int_regex;
+
+    if ((regcomp(&int_regex, INT_REGEX, REG_EXTENDED)) != OK)
+        exit(ERR_REGEX_COMP);
+
+    if (regexec(&int_regex, str, 0, NULL, 0) != OK)
+        return 0;
 
     return 1;
 }
@@ -96,8 +109,10 @@ big_float_t empty()
 
 int str_to_big_float_t(big_float_t *dest, const char *str) {
     if (!is_float(str))
+    {
+        printf("\n\nВвденное число не соответствует формату вещественного числа.");
         return ERR_INVALID_FLOAT_FORMAT;
-
+    }
     *dest = empty();
     size_t pos = 0;
     set_sign(str, &pos, &(dest->sign));
@@ -107,7 +122,10 @@ int str_to_big_float_t(big_float_t *dest, const char *str) {
     for (; isdigit((unsigned char)str[pos]); pos++, (dest->mantissa_lng)++, nums_before_dot++)
     {
         if (dest->mantissa_lng >= MAX_MANTISSA_LNG)
+        {
+            printf("\n\nПревышена допустимая длина строки");
             return ERR_INVALID_FLOAT_FORMAT;
+        }
 
         dest->digits[dest->mantissa_lng] = str[pos] - ZERO_ASCII_CODE;
     }
@@ -119,7 +137,10 @@ int str_to_big_float_t(big_float_t *dest, const char *str) {
         for (; isdigit((unsigned char)str[pos]); pos++, (dest->mantissa_lng)++)
         {
             if (dest->mantissa_lng >= MAX_MANTISSA_LNG)
+            {
+                printf("\n\nПревышена допустимая длина строки");
                 return ERR_INVALID_FLOAT_FORMAT;
+            }
 
             dest->digits[dest->mantissa_lng] = str[pos] - ZERO_ASCII_CODE;
         }
@@ -143,6 +164,12 @@ int str_to_big_float_t(big_float_t *dest, const char *str) {
 
     if (is_zero(*dest))
         set_zero(dest);
+
+    if (dest->exp_value > MAX_EXP_VALUE || dest->exp_value < MIN_EXP_VALUE)
+    {
+        printf("\n\nНедопутимое значение порядка");
+        return ERR_EXP_VALUE;
+    }
 
     return OK;
 }
@@ -229,7 +256,10 @@ big_float_t *result)
     result->sign = dividend.sign * divider.sign;
 
     if (result->exp_value < MIN_EXP_VALUE || result->exp_value > MAX_EXP_VALUE)
+    {
+        printf("Значение порядка результата превышает допутимые границы");
         return ERR_DIVISION_EXP_VALUE;
+    }
 
     // copy to pass const
     int dividend_digits[MAX_MANTISSA_LNG] = { 0 };
@@ -282,25 +312,88 @@ big_float_t *result)
             break;
         }
 
+    trim(result);
+
     return EXIT_SUCCESS;
 }
 
-int input_big_float(big_float_t *dest)
+void print_float_input_info()
+{
+    printf("Введите вещественное число (делитель): ");
+}
+
+void print_int_input_info()
+{
+    printf("Введите целое число (делимое): ");
+}
+
+int input_big_float(big_float_t *dest, const int check_int)
 {
     char input[MAX_IN_STR_LNG + 1];
 
     if (fgets(input, sizeof(input), stdin) == NULL)
-        return 1;
+        return 1; // ?
 
     if (input[strlen(input) - 1] != '\n')
+    {
+        printf("\n\nПревышена допустимая длина строки");
         return ERR_STRING_TOO_LONG;
+    }
 
     input[strlen(input) - 1] = '\0';
 
+    if (strlen(input) == 0)
+    {
+        printf("\n\nПустой ввод");
+        return ERR_EMPTY_STR;
+    }
+
     int error;
+
+    if (check_int)
+        if (!is_int(input))
+        {
+            printf("\n\nВвденное число не соответствует формату целого числа.");
+            return ERR_INVALID_INT_FORMAT;
+        }
 
     if ((error = str_to_big_float_t(dest, input)) != OK)
         return error;
 
     return EXIT_SUCCESS;
+}
+
+int input_numbers(big_float_t *dividend, big_float_t *divider)
+{
+    int error;
+    print_int_input_info();
+
+    if ((error = input_big_float(dividend, 1)) != EXIT_SUCCESS)
+        return error;
+
+    print_float_input_info();
+
+    if ((error = input_big_float(divider, 0)) != EXIT_SUCCESS)
+        return error;
+
+    if (is_zero(*divider))
+    {
+        printf("\n\nДеление на ноль");
+        return ERR_DIVISION_BY_ZERO;
+    }
+
+    printf("\n\n");
+
+    return EXIT_SUCCESS;
+}
+
+void print_result(const big_float_t dividend, const big_float_t divider, const
+big_float_t result)
+{
+    printf("Делимое:\t");
+    print_big_float(dividend);
+    printf("Делитель:\t");
+    print_big_float(divider);
+    printf("Результат:\t");
+    print_big_float(result);
 }
