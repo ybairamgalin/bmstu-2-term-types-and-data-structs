@@ -24,7 +24,7 @@
 #define ZERO_ASCII_CODE 48
 
 #define FLOAT_REGEX "^[+-]?([0-9]+([.][0-9]*)?([eE][+-]?[0-9]+)?|[.][0-9]+([eE][+-]?[0-9]+)?)$"
-#define INT_REGEX "^[+-]?([0-9]+([eE][+-]?[0-9]+)?)$"
+#define INT_REGEX "^[+-]?[0-9]+$"
 
 typedef struct
 {

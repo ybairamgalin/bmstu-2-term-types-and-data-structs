@@ -72,7 +72,7 @@ void set_zero(big_float_t *elem)
 {
     elem->sign = 1;
     elem->mantissa_lng = 2;
-    elem->exp_value = 1;
+    elem->exp_value = 0;
 }
 
 void trim(big_float_t *elem)
@@ -109,7 +109,7 @@ big_float_t empty()
 int str_to_big_float_t(big_float_t *dest, const char *str) {
     if (!is_float(str))
     {
-        printf("\n\nВвденное число не соответствует формату вещественного числа.");
+        printf("\n\nВведенное число не соответствует формату вещественного числа.");
         return ERR_INVALID_FLOAT_FORMAT;
     }
     *dest = empty();
@@ -268,6 +268,12 @@ int round_big_float_t(big_float_t *elem)
 int divide_big_float(const big_float_t dividend, const big_float_t divider,
 big_float_t *result)
 {
+    if (is_zero(dividend))
+    {
+        set_zero(result);
+        return EXIT_SUCCESS;
+    }
+
     // exp
     result->exp_value = dividend.exp_value - divider.exp_value;
     result->sign = dividend.sign * divider.sign;
@@ -384,7 +390,7 @@ int input_big_float(big_float_t *dest, const int check_int)
     if (check_int)
         if (!is_int(input))
         {
-            printf("\n\nВвденное число не соответствует формату целого числа.");
+            printf("\n\nВведенное число не соответствует формату целого числа.");
             return ERR_INVALID_INT_FORMAT;
         }
 
