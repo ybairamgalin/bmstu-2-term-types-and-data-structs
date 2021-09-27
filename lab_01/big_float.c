@@ -50,7 +50,7 @@ void set_sign(const char *str, size_t *pos, int *field)
 
 void shift_arr_left(int *arr, const int from, const int arr_sz)
 {
-    for (int i = from; i < arr_sz; i++)
+    for (int i = from; i < arr_sz - 1; i++)
         arr[i] = arr[i + 1];
 }
 
@@ -159,17 +159,17 @@ int str_to_big_float_t(big_float_t *dest, const char *str) {
         dest->exp_value *= exp_sign;
     }
 
-    dest->exp_value += nums_before_dot - 1;
-    trim(dest);
-
-    if (is_zero(*dest))
-        set_zero(dest);
-
     if (dest->exp_value > MAX_EXP_VALUE || dest->exp_value < MIN_EXP_VALUE)
     {
         printf("\n\nНедопутимое значение порядка");
         return ERR_EXP_VALUE;
     }
+
+    dest->exp_value += nums_before_dot - 1;
+    trim(dest);
+
+    if (is_zero(*dest))
+        set_zero(dest);
 
     return OK;
 }
@@ -255,12 +255,6 @@ big_float_t *result)
     result->exp_value = dividend.exp_value - divider.exp_value;
     result->sign = dividend.sign * divider.sign;
 
-    if (result->exp_value < MIN_EXP_VALUE || result->exp_value > MAX_EXP_VALUE)
-    {
-        printf("Значение порядка результата превышает допутимые границы");
-        return ERR_DIVISION_EXP_VALUE;
-    }
-
     // copy to pass const
     int dividend_digits[MAX_MANTISSA_LNG] = { 0 };
     arr_cpy(dividend.digits, dividend_digits, MAX_MANTISSA_LNG);
@@ -286,9 +280,7 @@ big_float_t *result)
 
         // to make factor 1 less
         subtract_mantissas(cur_mantissa, divider_digits, cur_mantissa);
-
         subtract_mantissas(dividend_digits, cur_mantissa, dividend_digits);
-
         result_digits[result_pos] = cur_factor;
 
         if (cmp == 0)
@@ -314,17 +306,25 @@ big_float_t *result)
 
     trim(result);
 
+    if (result->exp_value < MIN_EXP_VALUE || result->exp_value > MAX_EXP_VALUE)
+    {
+        printf("Значение порядка результата превышает допутимые границы");
+        return ERR_DIVISION_EXP_VALUE;
+    }
+
     return EXIT_SUCCESS;
 }
 
 void print_float_input_info()
 {
-    printf("Введите вещественное число (делитель): ");
+    printf("                                      \t ----|----|----|----|----|----|\n");
+    printf("Введите вещественное число (делитель):\t ");
 }
 
 void print_int_input_info()
 {
-    printf("Введите целое число (делимое): ");
+    printf("                                      \t ----|----|----|----|----|----|\n");
+    printf("Введите целое число (делимое):        \t ");
 }
 
 int input_big_float(big_float_t *dest, const int check_int)
