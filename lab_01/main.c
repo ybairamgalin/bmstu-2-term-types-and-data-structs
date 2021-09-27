@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "string.h"
-#include "errors.h"
 #include "big_float.h"
 
 void print_program_info()
@@ -40,5 +39,5 @@ int main(void)
 
     print_result(dividend, divider, result);
 
-    return OK;
+    return EXIT_SUCCESS;
 }

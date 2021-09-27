@@ -4,16 +4,15 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include "big_float.h"
-#include "errors.h"
 
 int is_float(const char *str)
 {
     regex_t float_regex;
 
-    if ((regcomp(&float_regex, FLOAT_REGEX, REG_EXTENDED)) != OK)
+    if ((regcomp(&float_regex, FLOAT_REGEX, REG_EXTENDED)) != EXIT_SUCCESS)
         exit(ERR_REGEX_COMP);
 
-    if (regexec(&float_regex, str, 0, NULL, 0) != OK)
+    if (regexec(&float_regex, str, 0, NULL, 0) != EXIT_SUCCESS)
         return 0;
 
     return 1;
@@ -23,10 +22,10 @@ int is_int(const char *str)
 {
     regex_t int_regex;
 
-    if ((regcomp(&int_regex, INT_REGEX, REG_EXTENDED)) != OK)
+    if ((regcomp(&int_regex, INT_REGEX, REG_EXTENDED)) != EXIT_SUCCESS)
         exit(ERR_REGEX_COMP);
 
-    if (regexec(&int_regex, str, 0, NULL, 0) != OK)
+    if (regexec(&int_regex, str, 0, NULL, 0) != EXIT_SUCCESS)
         return 0;
 
     return 1;
@@ -171,7 +170,7 @@ int str_to_big_float_t(big_float_t *dest, const char *str) {
     if (is_zero(*dest))
         set_zero(dest);
 
-    return OK;
+    return EXIT_SUCCESS;
 }
 
 void print_big_float(const big_float_t elem)
@@ -389,7 +388,7 @@ int input_big_float(big_float_t *dest, const int check_int)
             return ERR_INVALID_INT_FORMAT;
         }
 
-    if ((error = str_to_big_float_t(dest, input)) != OK)
+    if ((error = str_to_big_float_t(dest, input)) != EXIT_SUCCESS)
         return error;
 
     return EXIT_SUCCESS;
