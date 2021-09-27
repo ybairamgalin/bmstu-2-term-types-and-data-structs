@@ -248,6 +248,24 @@ int subtract_mantissas(const int *fir, const int *sec, int *result)
     return EXIT_SUCCESS;
 }
 
+int round_big_float_t(big_float_t *elem)
+{
+    if (elem->mantissa_lng == MAX_MANTISSA_LNG)
+        for (int i = MAX_MANTISSA_LNG - 1; i >= 0; i--)
+        {
+            elem->digits[i]++;
+
+            if (elem->digits[i] < 10)
+                break;
+
+            elem->digits[i] = 0;
+            elem->mantissa_lng--;
+        }
+
+    return 1;
+}
+
+
 int divide_big_float(const big_float_t dividend, const big_float_t divider,
 big_float_t *result)
 {
@@ -304,6 +322,18 @@ big_float_t *result)
             break;
         }
 
+    if (mantissa_cmp(dividend_digits, divider_digits) != 0)
+    {
+        int round_check_mantissa[MAX_MANTISSA_LNG] = { 0 };
+
+        for (int i = 0; i < 5; i++)
+            add_mantissas(divider_digits, round_check_mantissa,
+                          round_check_mantissa);
+
+        if (mantissa_cmp(dividend_digits, round_check_mantissa) > 0)
+            round_big_float_t(result);
+    }
+
     trim(result);
 
     if (result->exp_value < MIN_EXP_VALUE || result->exp_value > MAX_EXP_VALUE)
@@ -317,14 +347,16 @@ big_float_t *result)
 
 void print_float_input_info()
 {
-    printf("                                      \t ----|----|----|----|----|----|\n");
-    printf("Введите вещественное число (делитель):\t ");
+    printf("                                      \t"
+           "----|----|----|----|----|----|\n");
+    printf("Введите вещественное число (делитель):\t");
 }
 
 void print_int_input_info()
 {
-    printf("                                      \t ----|----|----|----|----|----|\n");
-    printf("Введите целое число (делимое):        \t ");
+    printf("                                      \t"
+           "----|----|----|----|----|----|\n");
+    printf("Введите целое число (делимое):        \t");
 }
 
 int input_big_float(big_float_t *dest, const int check_int)
