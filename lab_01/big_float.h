@@ -1,7 +1,7 @@
 #ifndef _BIG_FLOAT_H_
 #define _BIG_FLOAT_H_
 
-#define MAX_MANTISSA_LNG 30
+#define MAX_MANTISSA_LNG 31
 #define MAX_IN_STR_LNG MAX_MANTISSA_LNG + 3
 
 #define MAX_EXP_VALUE 99999

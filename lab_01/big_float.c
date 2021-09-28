@@ -249,17 +249,18 @@ int subtract_mantissas(const int *fir, const int *sec, int *result)
 
 int round_big_float_t(big_float_t *elem)
 {
-    if (elem->mantissa_lng == MAX_MANTISSA_LNG)
-        for (int i = MAX_MANTISSA_LNG - 1; i >= 0; i--)
+    for (int i = MAX_MANTISSA_LNG - 1; i >= 0; i--)
+    {
+        elem->digits[i]++;
+
+        if (elem->digits[i] < 10)
         {
-            elem->digits[i]++;
-
-            if (elem->digits[i] < 10)
-                break;
-
-            elem->digits[i] = 0;
-            elem->mantissa_lng--;
+            elem->mantissa_lng = i + 1;
+            break;
         }
+        elem->digits[i] = 0;
+        elem->mantissa_lng--;
+    }
 
     return 1;
 }
