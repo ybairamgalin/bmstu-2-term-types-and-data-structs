@@ -10,4 +10,6 @@ typedef struct {
     char apartment[MAX_ADDRESS_FIELD_LNG];
 } address_t;
 
+int input_address(address_t *address);
+
 #endif

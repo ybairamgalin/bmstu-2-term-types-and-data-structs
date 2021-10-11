@@ -6,6 +6,7 @@
 
 #include "subscriber_info.h"
 #include "address.h"
+#include <wchar.h>
 
 typedef struct {
     char first_name[MAX_NAME_LNG];
@@ -17,5 +18,6 @@ typedef struct {
 } subscriber_t;
 
 int input_subscriber(subscriber_t *sub);
+void print_subscriber(const subscriber_t sub);
 
 #endif
