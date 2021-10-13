@@ -70,3 +70,9 @@ int input_address(address_t *address)
 
     return EXIT_SUCCESS;
 }
+
+void print_address(const address_t address)
+{
+    printf("Адрес:\t\tгор. %s, ул. %s, дом %s, кв. %s\n",
+           address.city, address.street, address.house, address.apartment);
+}

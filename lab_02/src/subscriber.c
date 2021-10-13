@@ -54,13 +54,50 @@ int input_subscriber(subscriber_t *sub)
     if ((error = input_address(&(sub->address))) != EXIT_SUCCESS)
         return error;
 
+    if ((error = input_sub_info(&(sub->status), &(sub->subscriber_info)))
+        != EXIT_SUCCESS)
+        return error;
+
     return EXIT_SUCCESS;
 }
 
 void print_subscriber(const subscriber_t sub)
 {
-    printf("%s\t", sub.first_name);
-    printf("%s\t", sub.last_name);
-    printf("%s\t", sub.phone);
+    printf("Имя:\t\t%s\n", sub.first_name);
+    printf("Фамилия:\t%s\n", sub.last_name);
+    printf("Телефон:\t%s\n", sub.phone);
+    print_address(sub.address);
+    print_sub_info(sub.status, sub.subscriber_info);
     printf("\n");
+}
+
+int sub_last_name_cmp(const void *sub_1, const void *sub_2)
+{
+    subscriber_t sub_a = *(const subscriber_t*)sub_1;
+    subscriber_t sub_b = *(const subscriber_t*)sub_2;
+
+    return strcmp(sub_a.last_name, sub_b.last_name);
+}
+
+int sub_first_name_cmp(const void *sub_1, const void *sub_2)
+{
+    subscriber_t sub_a = *(const subscriber_t*)sub_1;
+    subscriber_t sub_b = *(const subscriber_t*)sub_2;
+
+    return strcmp(sub_a.first_name, sub_b.first_name);
+}
+
+int has_birthday_soon(const subscriber_t subscriber)
+{
+    if (subscriber.status == company)
+        return 0;
+
+    if (subscriber.subscriber_info.person_info.birth_date.month != 10)
+        return 0;
+
+    if (subscriber.subscriber_info.person_info.birth_date.day > 19 ||
+            subscriber.subscriber_info.person_info.birth_date.day < 12)
+        return 0;
+
+    return 1;
 }

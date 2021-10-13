@@ -11,5 +11,6 @@ typedef struct {
 } address_t;
 
 int input_address(address_t *address);
+void print_address(const address_t address);
 
 #endif

@@ -2,6 +2,7 @@
 #define __SUBSCRIBER_INFO__
 
 #define MAX_COMPANY_INFO_LNG 30
+#define ERR_SUB_INPUT_ERR 5
 
 typedef enum {
     personal,
@@ -27,5 +28,8 @@ typedef union {
     personal_info_t person_info;
     company_info_t company_info;
 } subscriber_info_t;
+
+int input_sub_info(status_t *status, subscriber_info_t *info);
+void print_sub_info(const status_t status, const subscriber_info_t info);
 
 #endif
