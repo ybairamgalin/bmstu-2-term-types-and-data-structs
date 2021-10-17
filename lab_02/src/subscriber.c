@@ -128,10 +128,16 @@ void qsort_keys(void *arr, int *keys, const size_t count,
     {
         if (cmp((char*)arr + keys[i] * size, (char*)arr + keys[pivot_index] * size) > 0)
         {
-            swap(&keys[pivot_index], &keys[pivot_index - 1], sizeof(int));
+            int tmp = keys[pivot_index];
+            keys[pivot_index] = keys[pivot_index - 1];
+            keys[pivot_index -  1] = tmp;
 
             if (pivot_index - 1 > i)
-                swap(&keys[i], &keys[pivot_index], sizeof(int));
+            {
+                tmp = keys[pivot_index];
+                keys[pivot_index] = keys[i];
+                keys[i] = tmp;
+            }
 
             pivot_index--;
         }
