@@ -114,10 +114,11 @@ void swap(void *a, void *b, size_t sz)
     }
 }
 
+// keys needs to be set to { 0, 1 , 2, ... } for correct work
 void qsort_keys(void *arr, int *keys, const size_t count,
-                const size_t size, int (*cmp)(void *, void*))
+                const size_t size, int (*cmp)(const void *, const void*))
 {
-    if (count == 1)
+    if (count <= 1)
         return;
 
     size_t pivot_index = count - 1;
@@ -125,12 +126,12 @@ void qsort_keys(void *arr, int *keys, const size_t count,
 
     while (i < pivot_index)
     {
-        if (cmp((char*)arr + i * size, (char*)arr + pivot_index * size) > 0)
+        if (cmp((char*)arr + keys[i] * size, (char*)arr + keys[pivot_index] * size) > 0)
         {
-            swap((char*)arr + pivot_index * size, (char*)arr + (pivot_index - 1) * size, size);
+            swap(&keys[pivot_index], &keys[pivot_index - 1], sizeof(int));
 
             if (pivot_index - 1 > i)
-                swap((char*)arr + i * size, (char*)arr + pivot_index * size, size);
+                swap(&keys[i], &keys[pivot_index], sizeof(int));
 
             pivot_index--;
         }
@@ -139,5 +140,22 @@ void qsort_keys(void *arr, int *keys, const size_t count,
     }
 
     qsort_keys(arr, keys, pivot_index, size, cmp);
-    qsort_keys((char*)arr + pivot_index * size, keys, count - pivot_index, size, cmp);
+    qsort_keys(arr, keys + pivot_index, count - pivot_index, size, cmp);
+}
+
+void my_sort(void *arr, size_t count, size_t size, comparator cmp)
+{
+    for (int i = 0; i < count - 1; i++)
+        for (int j = 0; j < count - 1; j++)
+            if (cmp((char*)arr + j * size, (char*)arr + (j + 1) * size) > 0)
+                swap((char*)arr + j * size, (char*)arr + (j + 1) * size, size);
+}
+
+void my_sort_key(void *arr, int *keys, const size_t count,
+                 const size_t size, comparator cmp)
+{
+    for (int i = 0; i < count - 1; i++)
+        for (int j = 0; j < count - 1; j++)
+            if (cmp((char*)arr + keys[j] * size, (char*)arr + keys[j + 1] * size) > 0)
+                swap(&keys[j], &keys[j + 1], sizeof(int));
 }

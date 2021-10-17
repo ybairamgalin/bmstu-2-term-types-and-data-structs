@@ -8,7 +8,7 @@
 #include "../inc/common.h"
 
 #define MAX_INPUT_LNG 30
-#define MAX_SUBS 100
+#define MAX_SUBS 1200
 
 #define FILE_ERR 6
 
@@ -73,7 +73,10 @@ int print_subs_from_file(FILE *file)
     read_subs_from_file(file, subs, &sz);
 
     for (int i = 0; i < sz; i++)
+    {
+        printf("Абонент %d\n", i);
         print_subscriber(subs[i]);
+    }
 
     return EXIT_SUCCESS;
 }
@@ -84,15 +87,13 @@ int qsort_print_subs(FILE *file)
     int sz;
 
     read_subs_from_file(file, subs, &sz);
-    qsort(subs, sz, sizeof(subscriber_t), sub_first_name_cmp);
+    qsort(subs, sz, sizeof(subscriber_t), sub_last_name_cmp);
 
     for (int i = 0; i < sz; i++)
         print_subscriber(subs[i]);
 
     return EXIT_SUCCESS;
 }
-
-
 
 int qsort_keys_subs(FILE *file)
 {
@@ -101,7 +102,28 @@ int qsort_keys_subs(FILE *file)
 
     read_subs_from_file(file, subs, &sz);
 
+    int keys[MAX_SUBS];
 
+    for (int i = 0; i < sz; i++)
+        keys[i] = i;
+
+    qsort_keys(subs, keys, sz, sizeof(subscriber_t), sub_first_name_cmp);
+
+    for (int i = 0; i < sz; i++)
+        printf("%d. Id %d\n", i, keys[i]);
+
+    printf("\n");
+
+    char input[MAX_INPUT_LNG];
+    printf("Желаете вывести отсортированную по ключам таблицу? (Y/n): ");
+
+    input_string(input, MAX_INPUT_LNG);
+
+    if (strcmp(input, "Y") == 0 || strcmp(input, "y") == 0)
+    {
+        for (int i = 0; i < sz; i++)
+            print_subscriber(subs[keys[i]]);
+    }
 
     return EXIT_SUCCESS;
 }
@@ -109,6 +131,90 @@ int qsort_keys_subs(FILE *file)
 int del_sub_from_file(FILE *file, subscriber_t *subs, const int cur_sz)
 {
     printf("Введите id пользователя, которого необходимо удалить: ");
+
+    // TODO
+
+    return EXIT_SUCCESS;
+}
+
+int64_t get_sort_time(void *arr, size_t count, size_t sz,
+    comparator cmp,
+    void (*sort)(void *, size_t, size_t size, comparator),
+    const int runs)
+{
+    int64_t elapsed_time = 0;
+    struct timeval start, end;
+
+    gettimeofday(&start, NULL);
+    gettimeofday(&end, NULL);
+
+    for (int i = 0; i < runs; i++)
+    {
+        gettimeofday(&start, NULL);
+        sort(arr, count, sz, cmp);
+        gettimeofday(&end, NULL);
+        elapsed_time += (end.tv_sec - start.tv_sec) *
+                        1000000LL + (end.tv_usec - start.tv_usec);
+    }
+
+    return elapsed_time;
+}
+
+int64_t get_keys_sort_time(void *arr, size_t count, size_t sz,
+                      comparator cmp,
+                      void (*sort)(void *, int*, size_t, size_t size, comparator),
+                      const int runs)
+{
+    int64_t elapsed_time = 0;
+    struct timeval start, end;
+
+    gettimeofday(&start, NULL);
+    gettimeofday(&end, NULL);
+
+    for (int i = 0; i < runs; i++)
+    {
+        int keys[MAX_SUBS];
+
+        for (int j = 0; i < MAX_SUBS; i++)
+            keys[j] = 0;
+
+        gettimeofday(&start, NULL);
+        sort(arr, keys, count, sz, cmp);
+        gettimeofday(&end, NULL);
+        elapsed_time += (end.tv_sec - start.tv_sec) *
+                        1000000LL + (end.tv_usec - start.tv_usec);
+    }
+
+    return elapsed_time;
+}
+
+int measure_sort_time()
+{
+    printf("Оценка эффективности: \n");
+
+    FILE *file_45 = fopen("data/test_45", "r");
+
+    if (file_45 == NULL)
+        return EXIT_FAILURE;
+
+    subscriber_t subs[MAX_SUBS];
+    int sz;
+
+    read_subs_from_file(file_45, subs, &sz);
+
+    int64_t elapsed_time_qsort  = get_sort_time(subs, sz, sizeof(subscriber_t), sub_last_name_cmp, qsort, 1000);
+    int64_t elapsed_time_bubble = get_sort_time(subs, sz, sizeof(subscriber_t), sub_last_name_cmp, my_sort, 1000);
+
+    int64_t elapsed_time_keys_qsort =  get_keys_sort_time(subs, sz, sizeof(subscriber_t), sub_last_name_cmp, qsort_keys, 1000);
+    int64_t elapsed_time_keys_bubble = get_keys_sort_time(subs, sz, sizeof(subscriber_t), sub_last_name_cmp, my_sort_key, 1000);
+
+    printf("QSORT      (1000 прогонов): %" PRId64 "\tmicroseconds (sec * (1e-6))\n", elapsed_time_qsort);
+    printf("BUBBLE     (1000 прогонов): %" PRId64 "\tmicroseconds (sec * (1e-6))\n", elapsed_time_bubble);
+    printf("QSORT KEY  (1000 прогонов): %" PRId64 "\tmicroseconds (sec * (1e-6))\n", elapsed_time_keys_qsort);
+    printf("BUBBLE KEY (1000 прогонов): %" PRId64 "\tmicroseconds (sec * (1e-6))\n", elapsed_time_keys_bubble);
+
+    fclose(file_45);
+
 
     return EXIT_SUCCESS;
 }
@@ -162,28 +268,8 @@ void run_menu(FILE *file)
         }
         else if (strcmp(input, "5") == 0)
         {
-            int keys[MAX_SUBS];
-
-            for (int i = 0; i < sz; i++)
-                keys[i] = i;
-
-            sort_keys(keys, subs, sz);
-
-            for (int i = 0; i < sz; i++)
-                printf("Для изначальной позиции %d индекс %d\n", i, (keys[i]));
-
-            printf("\n");
-
-            printf("Желаете вывести отсортированную по ключам таблицу? (Y/n): ");
-
-            input_string(input, MAX_INPUT_LNG);
-
-            if (strcmp(input, "Y") == 0 || strcmp(input, "y") == 0)
-            {
-                for (int i = 0; i < sz; i++)
-                    print_subscriber(subs[keys[i]]);
-            }
-
+            if (qsort_keys_subs(file) != EXIT_SUCCESS)
+                continue;
         }
         else if (strcmp(input, "6") == 0)
         {
@@ -197,43 +283,7 @@ void run_menu(FILE *file)
         }
         else if (strcmp(input, "7") == 0)
         {
-            printf("Оценка эффективности: \n");
-
-            struct timeval start, end;
-            int64_t elapsed_time_qsort = 0, elapsed_time_keys;
-
-            gettimeofday(&start, NULL);
-            gettimeofday(&end, NULL);
-
-            for (int i = 0; i < 1000; i++)
-            {
-                read_subs_from_file(file, subs, &sz);
-                gettimeofday(&start, NULL);
-                qsort(subs, sz, sizeof(subscriber_t), sub_last_name_cmp);
-                gettimeofday(&end, NULL);
-
-                elapsed_time_qsort += (end.tv_sec - start.tv_sec) *
-                                1000000LL + (end.tv_usec - start.tv_usec);
-            }
-
-            for (int i = 0; i < 1000; i++)
-            {
-                read_subs_from_file(file, subs, &sz);
-                int keys[MAX_SUBS];
-
-                for (int j = 0; i < sz; i++)
-                    keys[j] = j;
-
-                gettimeofday(&start, NULL);
-                sort_keys(keys, subs, sz);
-                gettimeofday(&end, NULL);
-
-                elapsed_time_keys += (end.tv_sec - start.tv_sec) *
-                                      1000000LL + (end.tv_usec - start.tv_usec);
-            }
-
-            printf("QSORT (1000 прогонов): %" PRId64 "\tmicroseconds (sec * (1e-6))\n", elapsed_time_qsort);
-            printf("KEYS  (1000 прогонов): %" PRId64 "\tmicroseconds (sec * (1e-6))\n", elapsed_time_keys);
+            measure_sort_time();
         }
         else if (strcmp(input, "0") == 0)
             cont = 0;

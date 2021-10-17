@@ -3,7 +3,6 @@
 #include <string.h>
 #include "../inc/subscriber_info.h"
 #include "../inc/common.h"
-#include "../inc/subscriber.h"
 
 int input_status(status_t *status)
 {
