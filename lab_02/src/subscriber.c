@@ -13,6 +13,8 @@ int input_last_name(char *dest)
 
     if ((error = input_string(dest, MAX_NAME_LNG)))
         return error;
+
+    return EXIT_SUCCESS;
 }
 
 int input_first_name(char *dest)
@@ -100,4 +102,42 @@ int has_birthday_soon(const subscriber_t subscriber)
         return 0;
 
     return 1;
+}
+
+void swap(void *a, void *b, size_t sz)
+{
+    for (size_t i = 0; i < sz; i++)
+    {
+        char buf = *((char *)a + i);
+        *((char *)a + i) = *((char *)b + i);
+        *((char *)b + i) = buf;
+    }
+}
+
+void qsort_keys(void *arr, int *keys, const size_t count,
+                const size_t size, int (*cmp)(void *, void*))
+{
+    if (count == 1)
+        return;
+
+    size_t pivot_index = count - 1;
+    size_t i = 0;
+
+    while (i < pivot_index)
+    {
+        if (cmp((char*)arr + i * size, (char*)arr + pivot_index * size) > 0)
+        {
+            swap((char*)arr + pivot_index * size, (char*)arr + (pivot_index - 1) * size, size);
+
+            if (pivot_index - 1 > i)
+                swap((char*)arr + i * size, (char*)arr + pivot_index * size, size);
+
+            pivot_index--;
+        }
+        else
+            i++;
+    }
+
+    qsort_keys(arr, keys, pivot_index, size, cmp);
+    qsort_keys((char*)arr + pivot_index * size, keys, count - pivot_index, size, cmp);
 }

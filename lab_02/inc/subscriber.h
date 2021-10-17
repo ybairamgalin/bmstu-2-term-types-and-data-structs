@@ -23,5 +23,7 @@ void print_subscriber(const subscriber_t sub);
 int sub_last_name_cmp(const void *sub_1, const void *sub_2);
 int sub_first_name_cmp(const void *sub_1, const void *sub_2);
 int has_birthday_soon(const subscriber_t subscriber);
+void qsort_keys(void *arr, int *keys, const size_t count,
+                const size_t size, int (*cmp)(void *, void*));
 
 #endif

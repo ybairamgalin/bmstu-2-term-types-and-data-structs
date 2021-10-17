@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/time.h>
+#include <inttypes.h>
 #include "../inc/subscriber.h"
 #include "../inc/common.h"
 
@@ -25,25 +27,99 @@ void sort_keys(int *key, const subscriber_t *subs, const int sz)
             }
 }
 
+void read_subs_from_file(FILE *file, subscriber_t *subs, int *sz)
+{
+    *sz = 0;
+
+    subscriber_t sub;
+    fseek(file, 0, SEEK_SET);
+
+    while (fread(&sub, sizeof(sub), 1, file) == 1)
+    {
+        sub.key = *sz;
+        subs[(*sz)++] = sub;
+    }
+}
+
+int add_sub_to_file(FILE *file, subscriber_t *subs, const int cur_sz)
+{
+    subscriber_t sub;
+
+    if (input_subscriber(&sub) != EXIT_SUCCESS)
+    {
+        printf("Ошибка ввода\n");
+        return EXIT_FAILURE;
+    }
+
+    fseek(file, 0, SEEK_END);
+
+    if (fwrite(&sub, sizeof(subscriber_t), 1, file) == 1)
+    {
+        sub.key = cur_sz;
+        subs[cur_sz] = sub;
+        printf("Записано успешно\n");
+    }
+    else
+        return EXIT_FAILURE;
+
+    return EXIT_SUCCESS;
+}
+
+int print_subs_from_file(FILE *file)
+{
+    subscriber_t subs[MAX_SUBS];
+    int sz;
+
+    read_subs_from_file(file, subs, &sz);
+
+    for (int i = 0; i < sz; i++)
+        print_subscriber(subs[i]);
+
+    return EXIT_SUCCESS;
+}
+
+int qsort_print_subs(FILE *file)
+{
+    subscriber_t subs[MAX_SUBS];
+    int sz;
+
+    read_subs_from_file(file, subs, &sz);
+    qsort(subs, sz, sizeof(subscriber_t), sub_first_name_cmp);
+
+    for (int i = 0; i < sz; i++)
+        print_subscriber(subs[i]);
+
+    return EXIT_SUCCESS;
+}
+
+
+
+int qsort_keys_subs(FILE *file)
+{
+    subscriber_t subs[MAX_SUBS];
+    int sz;
+
+    read_subs_from_file(file, subs, &sz);
+
+
+
+    return EXIT_SUCCESS;
+}
+
+int del_sub_from_file(FILE *file, subscriber_t *subs, const int cur_sz)
+{
+    printf("Введите id пользователя, которого необходимо удалить: ");
+
+    return EXIT_SUCCESS;
+}
+
 void run_menu(FILE *file)
 {
     int cont = 1;
 
     subscriber_t subs[MAX_SUBS];
     int sz = 0;
-
-    {
-        subscriber_t sub;
-        fseek(file, 0, SEEK_SET);
-
-        while (fread(&sub, sizeof(sub), 1, file) == 1)
-        {
-            sub.key = sz;
-            subs[sz++] = sub;
-        }
-    }
-
-
+    read_subs_from_file(file, subs, &sz);
 
     while (cont)
     {
@@ -55,6 +131,7 @@ void run_menu(FILE *file)
                "4 - Отсортировать по фамилии\n"
                "5 - Отсортировать по имени\n"
                "6 - Найти абонентов, у которых скоро день рождения\n"
+               "7 - оценить эффективность сортировок\n"
                "0 - Завершение работы программы\n");
 
         if (input_string(input, MAX_INPUT_LNG) != EXIT_SUCCESS)
@@ -65,45 +142,23 @@ void run_menu(FILE *file)
 
         if (strcmp(input, "1") == 0)
         {
-            subscriber_t sub;
-
-            if (input_subscriber(&sub) != EXIT_SUCCESS)
-            {
-                printf("Ошибка ввода\n");
+            if (add_sub_to_file(file, subs, sz++) != EXIT_SUCCESS)
                 continue;
-            }
-
-            fseek(file, 0, SEEK_END);
-
-            if (fwrite(&sub, sizeof(subscriber_t), 1, file) == 1)
-            {
-                sub.key = sz;
-                subs[sz++] = sub;
-                printf("Записано успешно\n");
-            }
-            else
-                return;
         }
         else if (strcmp(input, "2") == 0)
         {
-            // DEL
+            if (del_sub_from_file(file, subs, sz++) != EXIT_SUCCESS)
+                continue;
         }
         else if (strcmp(input, "3") == 0)
         {
-            fseek(file, 0, SEEK_SET);
-            subscriber_t sub;
-
-            while (fread(&sub, sizeof(sub), 1, file) == 1)
-            {
-                print_subscriber(sub);
-            }
+            if (print_subs_from_file(file) != EXIT_SUCCESS)
+                continue;
         }
         else if (strcmp(input, "4") == 0)
         {
-            qsort(subs, sz, sizeof(subscriber_t), sub_last_name_cmp);
-
-            for (int i = 0; i < sz; i++)
-                print_subscriber(subs[i]);
+            if (qsort_print_subs(file) != EXIT_SUCCESS)
+                continue;
         }
         else if (strcmp(input, "5") == 0)
         {
@@ -140,10 +195,50 @@ void run_menu(FILE *file)
                     print_subscriber(subs[i]);
             }
         }
+        else if (strcmp(input, "7") == 0)
+        {
+            printf("Оценка эффективности: \n");
+
+            struct timeval start, end;
+            int64_t elapsed_time_qsort = 0, elapsed_time_keys;
+
+            gettimeofday(&start, NULL);
+            gettimeofday(&end, NULL);
+
+            for (int i = 0; i < 1000; i++)
+            {
+                read_subs_from_file(file, subs, &sz);
+                gettimeofday(&start, NULL);
+                qsort(subs, sz, sizeof(subscriber_t), sub_last_name_cmp);
+                gettimeofday(&end, NULL);
+
+                elapsed_time_qsort += (end.tv_sec - start.tv_sec) *
+                                1000000LL + (end.tv_usec - start.tv_usec);
+            }
+
+            for (int i = 0; i < 1000; i++)
+            {
+                read_subs_from_file(file, subs, &sz);
+                int keys[MAX_SUBS];
+
+                for (int j = 0; i < sz; i++)
+                    keys[j] = j;
+
+                gettimeofday(&start, NULL);
+                sort_keys(keys, subs, sz);
+                gettimeofday(&end, NULL);
+
+                elapsed_time_keys += (end.tv_sec - start.tv_sec) *
+                                      1000000LL + (end.tv_usec - start.tv_usec);
+            }
+
+            printf("QSORT (1000 прогонов): %" PRId64 "\tmicroseconds (sec * (1e-6))\n", elapsed_time_qsort);
+            printf("KEYS  (1000 прогонов): %" PRId64 "\tmicroseconds (sec * (1e-6))\n", elapsed_time_keys);
+        }
         else if (strcmp(input, "0") == 0)
             cont = 0;
         else
-            printf("Неверный ввод");
+            printf("Неверный ввод\n");
     }
 }
 
