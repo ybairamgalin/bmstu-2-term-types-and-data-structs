@@ -12,21 +12,6 @@
 
 #define FILE_ERR 6
 
-void sort_keys(int *key, const subscriber_t *subs, const int sz)
-{
-    for (int i = 0; i < sz; i++)
-        key[i] = i;
-
-    for (int i = 0; i < sz - 1; i++)
-        for (int j = 0; j < sz - i - 1; j++)
-            if (sub_first_name_cmp(&subs[key[j]], &subs[key[j + 1]]) > 0)
-            {
-                int tmp = key[j];
-                key[j] = key[j + 1];
-                key[j + 1] = tmp;
-            }
-}
-
 void read_subs_from_file(FILE *file, subscriber_t *subs, int *sz)
 {
     *sz = 0;
@@ -227,8 +212,8 @@ int measure_sort_by_file(const char *filename)
     int64_t elapsed_time_keys_qsort =  get_keys_sort_time(subs, sz, sizeof(subscriber_t), sub_last_name_cmp, qsort_keys, 1000);
     int64_t elapsed_time_keys_bubble = get_keys_sort_time(subs, sz, sizeof(subscriber_t), sub_last_name_cmp, my_sort_key, 1000);
 
-    printf("%-10d|%15lld\t|%15lld\t|%15lld\t|%15lld\n", sz, elapsed_time_qsort, elapsed_time_bubble,
-           elapsed_time_keys_qsort, elapsed_time_keys_bubble);
+    printf("%-10d|%15lld\t|%15lld\t|%15lld\t|%15lld\n", sz, elapsed_time_keys_qsort, elapsed_time_bubble,
+           elapsed_time_qsort, elapsed_time_keys_bubble);
 
     fclose(file);
 
@@ -237,9 +222,9 @@ int measure_sort_by_file(const char *filename)
 
 int measure_sort_time()
 {
-    printf("Оценка эффективности: \n");
+    printf("Оценка эффективности (1000 интераций): \n");
 
-    printf("  COUNT  |%15s\t|%15s\t|%15s\t|%15s\n", "QSORT", "BUBBLE", "QSORT KEY", "BUBBLE KEY");
+    printf("  COUNT   |%15s\t|%15s\t|%15s\t|%15s\n", "QSORT", "BUBBLE", "QSORT KEY", "BUBBLE KEY");
 
     measure_sort_by_file("../lab_02/data/test_45");
     measure_sort_by_file("../lab_02/data/test_100");
@@ -269,17 +254,32 @@ void run_menu(FILE *file)
     subscriber_t subs[MAX_SUBS];
     int sz = 0;
     read_subs_from_file(file, subs, &sz);
+    char input[MAX_INPUT_LNG];
+    int menu_needed = 1;
 
     while (cont)
     {
-        char input[MAX_INPUT_LNG];
-        print_menu();
+        if (menu_needed)
+            print_menu();
 
-        if (input_string(input, MAX_INPUT_LNG) != EXIT_SUCCESS)
+        int error;
+
+        if ((error = input_string(input, MAX_INPUT_LNG)) != EXIT_SUCCESS)
         {
+            if (error == 10)
+            {
+                printf("Введите действие: ");
+                menu_needed = 0;
+            }
+
+            if (strcmp(input, "") == 0)
+                continue;
+
             printf("Ошибка ввода действия\n");
             continue;
         }
+
+        menu_needed = 1;
 
         if (strcmp(input, "1") == 0)
         {
@@ -351,7 +351,6 @@ int main(void)
         if (file == NULL)
             return FILE_ERR;
     }
-
 
     printf("Файл открыт\n");
     run_menu(file);

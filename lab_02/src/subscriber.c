@@ -14,6 +14,8 @@ int input_last_name(char *dest)
     if ((error = input_string(dest, MAX_NAME_LNG)))
         return error;
 
+    dest[0] = toupper(dest[0]);
+
     return EXIT_SUCCESS;
 }
 
@@ -24,6 +26,8 @@ int input_first_name(char *dest)
 
     if ((error = input_string(dest, MAX_NAME_LNG)))
         return error;
+
+    dest[0] = toupper(dest[0]);
 
     return EXIT_SUCCESS;
 }
@@ -97,8 +101,8 @@ int has_birthday_soon(const subscriber_t subscriber)
     if (subscriber.subscriber_info.person_info.birth_date.month != 10)
         return 0;
 
-    if (subscriber.subscriber_info.person_info.birth_date.day > 19 ||
-            subscriber.subscriber_info.person_info.birth_date.day < 12)
+    if (subscriber.subscriber_info.person_info.birth_date.day > 25 ||
+            subscriber.subscriber_info.person_info.birth_date.day < 18)
         return 0;
 
     return 1;

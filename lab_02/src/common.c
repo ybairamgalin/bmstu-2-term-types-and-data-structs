@@ -17,10 +17,7 @@ int input_string(char *dest, const int max_lng)
     dest[strlen(dest) - 1] = '\0';
 
     if (strlen(dest) == 0)
-    {
-        printf("Пустой ввод\n");
-        return EXIT_FAILURE;
-    }
+        return 10;
 
     return EXIT_SUCCESS;
 }
