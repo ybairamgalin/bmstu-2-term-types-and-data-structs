@@ -4,11 +4,10 @@
 
 int main(void)
 {
-    sparse_matrix_t sparse_matrix;
+    setbuf(stdout, NULL);
 
-    create_sparse_matrix(&sparse_matrix, 8, 3, 5);
+    sparse_matrix_start();
 
-    free_sparse_matrix(&sparse_matrix);
 
     return EXIT_SUCCESS;
 }

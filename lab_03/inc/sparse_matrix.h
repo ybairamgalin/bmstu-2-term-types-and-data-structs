@@ -27,4 +27,8 @@ typedef struct {
 int create_sparse_matrix(sparse_matrix_t *matrix, const int non_zero_count,
                          const int cols, const int rows);
 void free_sparse_matrix(sparse_matrix_t *matrix);
+int input_sparse_matrix(sparse_matrix_t *matrix);
+void print_sparse_matrix(sparse_matrix_t matrix);
+void sparse_matrix_start();
+
 #endif
