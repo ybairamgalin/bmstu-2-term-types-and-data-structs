@@ -219,8 +219,6 @@ sparse_matrix_t add_sparse_matrix(sparse_matrix_t *first, sparse_matrix_t *secon
                     continue;
                 }
             }
-
-            cur_non_zero_result++;
         }
 
         head_first = head_first->next;
@@ -231,7 +229,7 @@ sparse_matrix_t add_sparse_matrix(sparse_matrix_t *first, sparse_matrix_t *secon
     }
 
     result.values = realloc(result.values, sizeof(int) * cur_non_zero_result);
-    result.cols = realloc(result.cols, sizeof(int) * cur_non_zero_result);
+    result.cols = realloc(result.cols, sizeof(size_t) * cur_non_zero_result);
 
     result.count_non_zero = cur_non_zero_result;
 
@@ -247,6 +245,9 @@ void sparse_matrix_start()
 
     printf("For matrix 2:\n");
     input_sparse_matrix(&second);
+
+    print_sparse_matrix(first);
+    print_sparse_matrix(second);
 
     if (first.count_cols != second.count_cols)
     {
