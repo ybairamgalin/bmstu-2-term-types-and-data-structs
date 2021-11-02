@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include "../inc/sparse_matrix.h"
+#include "sparse_matrix.h"
 
 int create_row_list_elem(until_row_count_list_t *head, const size_t value)
 {
@@ -293,10 +293,20 @@ void sparse_matrix_start()
     sparse_matrix_t first, second;
 
     printf("For matrix 1\n");
-    input_sparse_matrix(&first);
+
+    if (input_sparse_matrix(&first) != EXIT_SUCCESS)
+    {
+        printf("Matrix input error\n");
+        return;
+    }
 
     printf("For matrix 2\n");
-    input_sparse_matrix(&second);
+
+    if (input_sparse_matrix(&second) != EXIT_SUCCESS)
+    {
+        printf("Matrix input error\n");
+        return;
+    }
 
     if (first.count_cols != second.count_cols)
     {
