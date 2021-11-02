@@ -24,9 +24,10 @@ int64_t measure_sparse_matrix_add_time(const char *first_filename,
         elapsed_time += (end.tv_sec - start.tv_sec) *
                         1000000LL + (end.tv_usec - start.tv_usec);
 
-        *mem_taken = result.count_non_zero * sizeof(int) * 2 +
-                result.count_rows * sizeof(int) +
-                sizeof(int*) * result.count_rows + sizeof(int) * 2;
+        *mem_taken = result.count_non_zero * sizeof(int) +
+                result.count_non_zero * sizeof(size_t*) +
+                result.count_rows * sizeof(until_row_count_list_t) +
+                sizeof(size_t) * 3 + sizeof(size_t*);
 
         free_sparse_matrix(&result);
     }
@@ -58,7 +59,8 @@ int64_t measure_matrix_add_time(const char *first_filename,
         matrix_t result = add_matrix(&first, &second);
         gettimeofday(&end, NULL);
 
-        *mem_taken = sizeof(int) * 2 + sizeof(int) * result.rows * result.cols;
+        *mem_taken = sizeof(int) * 2 + sizeof(int) * result.rows * result.cols +
+                     sizeof(int*) * result.rows + sizeof (int*);
 
         elapsed_time += (end.tv_sec - start.tv_sec) *
                         1000000LL + (end.tv_usec - start.tv_usec);
