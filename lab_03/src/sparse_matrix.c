@@ -128,17 +128,17 @@ int input_sparse_matrix(sparse_matrix_t *matrix)
 
     printf("Enter number of rows:\n");
 
-    if (scanf("%lld", &rows_max) != 1)
+    if (scanf("%lu", &rows_max) != 1)
         return INPUT_ERR;
 
     printf("Enter number of cols:\n");
 
-    if (scanf("%lld", &cols_max) != 1)
+    if (scanf("%lu", &cols_max) != 1)
         return INPUT_ERR;
 
     printf("Enter number of non-zero elements:\n");
 
-    if (scanf("%lld", &non_zero_max) != 1)
+    if (scanf("%lu", &non_zero_max) != 1)
         return INPUT_ERR;
 
     create_sparse_matrix(matrix, non_zero_max, cols_max, rows_max);
@@ -218,6 +218,13 @@ sparse_matrix_t add_sparse_matrix(sparse_matrix_t *first, sparse_matrix_t *secon
             {
                 if (first->cols[i] == second->cols[j])
                 {
+                    if (first->values[i] + second->values[j] == 0)
+                    {
+                        i++;
+                        j++;
+                        continue;
+                    }
+
                     result.values[cur_non_zero_result] = first->values[i] + second->values[j];
                     result.cols[cur_non_zero_result] = first->cols[i];
                     i++;
@@ -282,7 +289,7 @@ sparse_matrix_t add_sparse_matrix(sparse_matrix_t *first, sparse_matrix_t *secon
 
 void sparse_matrix_start()
 {
-    printf("Matrix input mode\nOnly use integers during input\n\n");
+    printf("Matrix input mode\nOnly use positive integers during input\n\n");
     sparse_matrix_t first, second;
 
     printf("For matrix 1\n");
