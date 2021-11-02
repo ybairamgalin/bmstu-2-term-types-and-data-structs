@@ -9,16 +9,32 @@ int main(void)
 {
     setbuf(stdout, NULL);
 
-    int user_input;
-    printf("1 - sparse\n2 - time it!\n0 - exit\n");
+    char user_string[128];
+    printf("1 - add sparse matrix\n2 - evaluate time and memory!\n0 - exit\n");
 
-    if (scanf("%d", &user_input) != 1)
+    if (fgets(user_string, sizeof(user_string), stdin) == NULL)
         return EXIT_FAILURE;
+
+    char *end;
+    long user_input = strtol(user_string, &end, 10);
+
+    if (end == user_string)
+    {
+        printf("Input error\n");
+        return EXIT_FAILURE;
+    }
 
     if (user_input == 1)
         sparse_matrix_start();
     else if (user_input == 2)
         eval_time();
+    else if (user_input == 0)
+        printf("Exit\n");
+    else
+    {
+        printf("Input error\n");
+        return EXIT_FAILURE;
+    }
 
     return EXIT_SUCCESS;
 }

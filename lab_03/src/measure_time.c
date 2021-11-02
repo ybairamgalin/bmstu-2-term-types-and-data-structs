@@ -80,6 +80,8 @@ int64_t measure_matrix_add_time(const char *first_filename,
 
 void eval_time()
 {
+    printf("Performing time evaluation...\n");
+
     size_t mem_250_2, mem_250_5, mem_250_10, mem_250_15, mem_250_20, mem_250_30,
     mem_250_40, mem_250_50, mem_250_60;
     size_t mem_500_2, mem_500_5, mem_500_10, mem_500_15, mem_500_20, mem_500_30,
