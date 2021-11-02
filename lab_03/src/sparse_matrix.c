@@ -124,7 +124,6 @@ int read_sparse_matrix_from_file(sparse_matrix_t *matrix, const char *filename)
 
 int input_sparse_matrix(sparse_matrix_t *matrix)
 {
-    printf("Matrix input\n");
     size_t rows_max, cols_max, non_zero_max;
 
     printf("Enter number of rows:\n");
@@ -150,7 +149,7 @@ int input_sparse_matrix(sparse_matrix_t *matrix)
     {
         head = head->next;
 
-        printf("Enter row %d ((%lld integers divided with space)):\n", i + 1, matrix->count_cols);
+        printf("Enter row %d ((%ld integers divided with space)):\n", i + 1, matrix->count_cols);
         add_matrix_row(matrix, &non_zero_cur, stdin);
 
         head->value = non_zero_cur;
@@ -283,12 +282,13 @@ sparse_matrix_t add_sparse_matrix(sparse_matrix_t *first, sparse_matrix_t *secon
 
 void sparse_matrix_start()
 {
+    printf("Matrix input mode\nOnly use integers during input\n\n");
     sparse_matrix_t first, second;
 
-    printf("For matrix 1:\n");
+    printf("For matrix 1\n");
     input_sparse_matrix(&first);
 
-    printf("For matrix 2:\n");
+    printf("For matrix 2\n");
     input_sparse_matrix(&second);
 
     if (first.count_cols != second.count_cols)
