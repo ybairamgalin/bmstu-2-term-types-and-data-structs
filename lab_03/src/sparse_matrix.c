@@ -131,9 +131,15 @@ int input_sparse_matrix(sparse_matrix_t *matrix)
     if (scanf("%lu", &rows_max) != 1)
         return INPUT_ERR;
 
+    if (rows_max == 0)
+        return INPUT_ERR;
+
     printf("Enter number of cols:\n");
 
     if (scanf("%lu", &cols_max) != 1)
+        return INPUT_ERR;
+
+    if (cols_max == 0)
         return INPUT_ERR;
 
     printf("Enter number of non-zero elements:\n");

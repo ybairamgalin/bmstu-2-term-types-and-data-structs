@@ -10,7 +10,11 @@ int main(void)
     setbuf(stdout, NULL);
 
     char user_string[128];
-    printf("1 - add sparse matrix\n2 - evaluate time and memory!\n0 - exit\n");
+    printf("Yaroslav Bairamgalin | BMSTU 2021\n");
+    printf("This program should be used to add 2 matrices in sparse form "
+           "and/or evaluate time of such operation in comparison with "
+           "regular matrix representation.\n\n");
+    printf("1 - add sparse matrices\n2 - evaluate time and memory!\n0 - exit\n");
 
     if (fgets(user_string, sizeof(user_string), stdin) == NULL)
         return EXIT_FAILURE;
