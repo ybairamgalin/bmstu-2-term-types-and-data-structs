@@ -30,5 +30,7 @@ void free_sparse_matrix(sparse_matrix_t *matrix);
 int input_sparse_matrix(sparse_matrix_t *matrix);
 void print_sparse_matrix(sparse_matrix_t matrix);
 void sparse_matrix_start();
+int read_sparse_matrix_from_file(sparse_matrix_t *matrix, const char *filename);
+sparse_matrix_t add_sparse_matrix(sparse_matrix_t *first, sparse_matrix_t *second);
 
 #endif

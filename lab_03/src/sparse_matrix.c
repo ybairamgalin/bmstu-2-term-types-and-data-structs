@@ -65,14 +65,14 @@ int create_sparse_matrix(sparse_matrix_t *matrix, const int non_zero_count,
     return EXIT_SUCCESS;
 }
 
-int add_matrix_row(sparse_matrix_t *matrix, int *non_zero)
+int add_matrix_row(sparse_matrix_t *matrix, int *non_zero, FILE *file)
 {
     int num;
     int non_zero_in_row = 0;
 
     for (int j = 0; j < matrix->count_cols; j++)
     {
-        if (scanf("%d", &num) != 1)
+        if (fscanf(file, "%d", &num) != 1)
             return INPUT_ERR;
 
         if (num != 0)
@@ -87,7 +87,37 @@ int add_matrix_row(sparse_matrix_t *matrix, int *non_zero)
     }
 
     *non_zero += non_zero_in_row;
-    printf("Row added\n");
+
+    return EXIT_SUCCESS;
+}
+
+int read_sparse_matrix_from_file(sparse_matrix_t *matrix, const char *filename)
+{
+    FILE* file = fopen(filename, "r");
+
+    size_t rows_max, cols_max, non_zero_max;
+
+    if (fscanf(file, "%lld", &rows_max) != 1)
+        return INPUT_ERR;
+
+    if (fscanf(file, "%lld", &cols_max) != 1)
+        return INPUT_ERR;
+
+    if (fscanf(file, "%lld", &non_zero_max) != 1)
+        return INPUT_ERR;
+
+    create_sparse_matrix(matrix, non_zero_max, cols_max, rows_max);
+    int non_zero_cur = 0;
+    until_row_count_list_t *head = &(matrix->row_list);
+
+    for (int i = 0; i < matrix->count_rows; i++)
+    {
+        head = head->next;
+        add_matrix_row(matrix, &non_zero_cur, file);
+        head->value = non_zero_cur;
+    }
+
+    fclose(file);
 
     return EXIT_SUCCESS;
 }
@@ -121,7 +151,7 @@ int input_sparse_matrix(sparse_matrix_t *matrix)
         head = head->next;
 
         printf("Enter row %d ((%lld integers divided with space)):\n", i + 1, matrix->count_cols);
-        add_matrix_row(matrix, &non_zero_cur);
+        add_matrix_row(matrix, &non_zero_cur, stdin);
 
         head->value = non_zero_cur;
     }
@@ -263,6 +293,7 @@ void sparse_matrix_start()
 
     sparse_matrix_t result = add_sparse_matrix(&first, &second);
 
+    printf("Result:\n");
     print_sparse_matrix(result);
 
     free_sparse_matrix(&first);
