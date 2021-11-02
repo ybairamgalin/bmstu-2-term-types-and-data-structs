@@ -161,16 +161,31 @@ int input_sparse_matrix(sparse_matrix_t *matrix)
 
 void print_sparse_matrix(sparse_matrix_t matrix)
 {
+    printf("A\t= {");
+
     for (int i = 0; i < matrix.count_non_zero; i++)
-        printf("%d. value = %d, col = %lld\n", i, matrix.values[i], matrix.cols[i]);
+        printf(" %d,", matrix.values[i]);
+
+    printf(" }\n");
+
+    printf("JA\t= {");
+
+    for (int i = 0; i < matrix.count_non_zero; i++)
+        printf(" %ld,", matrix.cols[i]);
+
+    printf(" }\n");
+
+    printf("IA\t= {");
 
     until_row_count_list_t *head = &matrix.row_list;
 
     for (int i = 0; i < matrix.count_rows + 1; i++)
     {
-        printf("Row %d from %lld\n", i, head->value);
+        printf(" %ld,", head->value);
         head = head->next;
     }
+
+    printf(" }\n");
 }
 
 size_t min_size(const size_t first, const size_t second)
@@ -275,9 +290,6 @@ void sparse_matrix_start()
 
     printf("For matrix 2:\n");
     input_sparse_matrix(&second);
-
-    print_sparse_matrix(first);
-    print_sparse_matrix(second);
 
     if (first.count_cols != second.count_cols)
     {
