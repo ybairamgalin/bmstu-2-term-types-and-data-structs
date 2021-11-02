@@ -2,21 +2,6 @@
 #include <stdio.h>
 #include "stack.h"
 
-my_stack_t* create_stack(int first_value)
-{
-    struct stack *stack;
-
-    stack = malloc(sizeof(struct stack));
-
-    if (stack == NULL)
-        return NULL;
-
-    stack->value = first_value;
-    stack->prev = NULL;
-
-    return stack;
-}
-
 int peek(my_stack_t *head)
 {
     return head->value;
@@ -54,6 +39,12 @@ void insert_in_stack(my_stack_t **head, int value)
     struct stack *stack = *head;
     struct stack *next = NULL;
 
+    if (*head == NULL)
+    {
+        push(head, value);
+        return;
+    }
+
     while (value < peek(stack) && stack->prev != NULL)
     {
         next = stack;
@@ -70,7 +61,7 @@ void insert_in_stack(my_stack_t **head, int value)
 
 my_stack_t* sort(my_stack_t **head)
 {
-    struct stack *new = create_stack(0);
+    struct stack *new = NULL;
 
     while (*head != NULL)
     {
@@ -84,11 +75,36 @@ my_stack_t* sort(my_stack_t **head)
 
 my_stack_t* merge(my_stack_t **first, my_stack_t **second)
 {
-    struct stack *new = create_stack(0);
+    struct stack *new = NULL;
 
-    while ((*first) != NULL && (*second) != NULL);
+    while (*first != NULL && *second != NULL)
     {
-
+        if (peek(*first) >= peek(*second))
+        {
+            push(&new, peek(*first));
+            pop(first);
+        }
+        else
+        {
+            push(&new, peek(*second));
+            pop(second);
+        }
     }
+
+    if (*first != NULL)
+        while (*first != NULL)
+        {
+            push(&new, peek(*first));
+            pop(first);
+        }
+
+    if (*second != NULL)
+        while (*second != NULL)
+        {
+            push(&new, peek(*second));
+            pop(second);
+        }
+
+    return new;
 }
 
