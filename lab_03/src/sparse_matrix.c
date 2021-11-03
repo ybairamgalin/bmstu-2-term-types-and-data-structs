@@ -124,27 +124,30 @@ int read_sparse_matrix_from_file(sparse_matrix_t *matrix, const char *filename)
 
 int input_sparse_matrix(sparse_matrix_t *matrix)
 {
-    size_t rows_max, cols_max, non_zero_max;
+    int rows_max, cols_max, non_zero_max;
 
     printf("Enter number of rows:\n");
 
-    if (scanf("%lu", &rows_max) != 1)
+    if (scanf("%d", &rows_max) != 1)
         return INPUT_ERR;
 
-    if (rows_max == 0)
+    if (rows_max <= 0)
         return INPUT_ERR;
 
     printf("Enter number of cols:\n");
 
-    if (scanf("%lu", &cols_max) != 1)
+    if (scanf("%d", &cols_max) != 1)
         return INPUT_ERR;
 
-    if (cols_max == 0)
+    if (cols_max <= 0)
         return INPUT_ERR;
 
     printf("Enter number of non-zero elements:\n");
 
-    if (scanf("%lu", &non_zero_max) != 1)
+    if (scanf("%d", &non_zero_max) != 1)
+        return INPUT_ERR;
+
+    if (non_zero_max <= 0)
         return INPUT_ERR;
 
     create_sparse_matrix(matrix, non_zero_max, cols_max, rows_max);
