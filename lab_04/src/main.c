@@ -1,44 +1,55 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <stack.h>
+
+#define MAX_USER_INPUT_LNG 128
 
 int main(void)
 {
-    my_stack_t *my_stack_1 = NULL;
-    my_stack_t *my_stack_2 = NULL;
+    printf("Yaroslav Bairamgalin | BMSTU 2021");
+    printf("Program receives to sets of integers, puts them in 2 stacks "
+           "and than sorts. Two stack types are available: list and static "
+           "array.\n");
+    printf("1 - use stack based on list\n2 - use stack based on array\n"
+           "0 - exit\n");
 
-    push(&my_stack_1, 1);
-    push(&my_stack_1, 3);
-    push(&my_stack_1, 7);
-    push(&my_stack_1, 5);
-    push(&my_stack_1, 2);
-    push(&my_stack_1, 4);
-    push(&my_stack_1, 6);
-    push(&my_stack_1, 11);
-    push(&my_stack_1, 12);
-    push(&my_stack_1, 13);
+    char user_input[MAX_USER_INPUT_LNG];
 
-    push(&my_stack_2, 1);
-    push(&my_stack_2, 6);
-    push(&my_stack_2, 4);
-    push(&my_stack_2, 2);
-    push(&my_stack_2, 5);
-    push(&my_stack_2, 7);
-    push(&my_stack_2, 3);
-    push(&my_stack_2, 10);
-    push(&my_stack_2, 14);
-
-    my_stack_1 = sort(&my_stack_1);
-    my_stack_2 = sort(&my_stack_2);
-
-    my_stack_t *merged;
-    merged = merge(&my_stack_1, &my_stack_2);
-
-    while (merged != NULL)
+    if (fgets(user_input, sizeof(user_input), stdin) == NULL)
     {
-        printf("%d\n", peek(merged));
-        pop(&merged);
+        printf("Input failure\n");
+        return EXIT_FAILURE;
     }
+
+    if (user_input[strlen(user_input) - 1] != '\n')
+    {
+        printf("Input too long");
+        return EXIT_FAILURE;
+    }
+
+    user_input[strlen(user_input) - 1] = '\0';
+
+    char *end;
+    long value = strtol(user_input, &end, 10);
+
+    if (end == user_input)
+    {
+        printf("Input error\n");
+        return EXIT_FAILURE;
+    }
+
+    if (value == 1)
+    {
+        if (stack_start() != EXIT_SUCCESS)
+            return EXIT_FAILURE;
+    } else if (value == 2)
+    {
+        // TODO
+    } else if (value == 0)
+        return EXIT_SUCCESS;
+    else
+        return EXIT_FAILURE;
 
     return EXIT_SUCCESS;
 }
