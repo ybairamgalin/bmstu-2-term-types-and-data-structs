@@ -24,5 +24,6 @@ my_stack_t* stack_merge(my_stack_t **first, my_stack_t **second);
 my_stack_t* stack_input();
 void stack_show_freed(my_stack_t *new);
 int stack_start();
+int arr_stack_start();
 
 #endif

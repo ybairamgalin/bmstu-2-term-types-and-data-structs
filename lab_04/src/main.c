@@ -7,8 +7,8 @@
 
 int main(void)
 {
-    printf("Yaroslav Bairamgalin | BMSTU 2021");
-    printf("Program receives to sets of integers, puts them in 2 stacks "
+    printf("Yaroslav Bairamgalin | BMSTU 2021\n");
+    printf("Program receives 2 sets of integers, puts them in 2 stacks "
            "and than sorts. Two stack types are available: list and static "
            "array.\n");
     printf("1 - use stack based on list\n2 - use stack based on array\n"
@@ -24,7 +24,7 @@ int main(void)
 
     if (user_input[strlen(user_input) - 1] != '\n')
     {
-        printf("Input too long");
+        printf("Input too long\n");
         return EXIT_FAILURE;
     }
 
@@ -43,10 +43,13 @@ int main(void)
     {
         if (stack_start() != EXIT_SUCCESS)
             return EXIT_FAILURE;
-    } else if (value == 2)
+    }
+    else if (value == 2)
     {
-        // TODO
-    } else if (value == 0)
+        if (arr_stack_start() != EXIT_SUCCESS)
+            return EXIT_FAILURE;
+    }
+    else if (value == 0)
         return EXIT_SUCCESS;
     else
         return EXIT_FAILURE;

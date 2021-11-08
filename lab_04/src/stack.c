@@ -34,7 +34,7 @@ void stack_show_freed(my_stack_t *new)
 
     if (new == NULL)
     {
-        printf("\nFreed zones in memory:\n");
+        printf("\nFreed chunks in memory:\n");
 
         for (int i = 0; i < count; i++)
             printf("from %p to %p\n", freed[i], freed[i] + 1);
@@ -45,7 +45,7 @@ void stack_show_freed(my_stack_t *new)
     for (int i = 0; i < count; i++)
         if (new == freed[i])
             return;
-
+//всем привет это Даша Чикаго
     freed[count++] = new;
 }
 
@@ -193,7 +193,7 @@ arr_stack_t *arr_stack_push(arr_stack_t **stack, int value)
 {
     if ((*stack)->count_in_stack + 1 > MAX_ARR_STACK_SZ)
     {
-        printf("Stack overflow");
+        printf("Stack overflow\n");
         return NULL;
     }
 
@@ -206,13 +206,15 @@ arr_stack_t *arr_stack_pop(arr_stack_t **stack)
 {
     if ((*stack)->count_in_stack > 0)
         ((*stack)->count_in_stack)--;
+    else
+        return NULL;
 
     return *stack;
 }
 
 int arr_stack_peek(arr_stack_t *stack)
 {
-    return (stack->values[stack->count_in_stack]);
+    return (stack->values[stack->count_in_stack - 1]);
 }
 
 int stack_start()
@@ -249,6 +251,115 @@ int stack_start()
     }
 
     stack_show_freed(NULL);
+
+    return EXIT_SUCCESS;
+}
+
+arr_stack_t *arr_stack_expand(arr_stack_t **dest, arr_stack_t **src)
+{
+    while ((*src)->count_in_stack > 0)
+    {
+        arr_stack_push(dest, arr_stack_peek(*src));
+        arr_stack_pop(src);
+    }
+
+    return *dest;
+}
+
+static int cmp(const void *first, const void *second)
+{
+    int *fir = (int*)first;
+    int *sec = (int*)second;
+
+    if (*fir > *sec)
+        return -1;
+    if (*fir == *sec)
+        return 0;
+
+    return 1;
+}
+ void arr_stack_sort(arr_stack_t **stack)
+ {
+     qsort((*stack)->values, (*stack)->count_in_stack, sizeof(int), cmp);
+ }
+
+arr_stack_t *arr_stack_input()
+{
+    arr_stack_t *stack = arr_stack_create();
+    printf("Input stack mode\n\n");
+    char user_input[128];
+
+    do {
+        printf("Input next value or NULL to stop: ");
+
+        if (fgets(user_input, sizeof(user_input), stdin) == NULL)
+            return NULL;
+
+        if (user_input[strlen(user_input) - 1] != '\n')
+            return NULL;
+
+        user_input[strlen(user_input) - 1] = '\0';
+
+        if (strcmp(user_input, "NULL") == 0)
+            break;
+
+        char *end;
+        long value = strtol(user_input, &end, 10);
+
+        if (end == user_input)
+        {
+            printf("Input error\n");
+            continue;
+        }
+
+        if (value > INT_MAX)
+        {
+            printf("Value is too big\n");
+            continue;
+        }
+
+        arr_stack_push(&stack, (int)value);
+    } while (1);
+
+    return stack;
+}
+
+int arr_stack_start()
+{
+    arr_stack_t *stack_1 = arr_stack_create();
+    arr_stack_t *stack_2 = arr_stack_create();
+
+    printf("Stack 1\n");
+    stack_1 = arr_stack_input();
+
+    if (stack_1 == NULL)
+    {
+        printf("An error occurred\n");
+        return EXIT_FAILURE;
+    }
+
+    printf("Stack 2\n");
+    stack_2 = arr_stack_input();
+
+    if (stack_2 == NULL)
+    {
+        printf("An error occurred\n");
+        return EXIT_FAILURE;
+    }
+
+    printf("\nSorted! Here is what we got\n");
+
+    arr_stack_expand(&stack_1, &stack_2);
+    arr_stack_sort(&stack_1);
+
+    while (stack_1->count_in_stack != 0)
+    {
+        printf("value = %d\n", arr_stack_peek(stack_1));
+        arr_stack_pop(&stack_1);
+    }
+
+    arr_stack_free(&stack_1);
+    arr_stack_free(&stack_2);
 
     return EXIT_SUCCESS;
 }
