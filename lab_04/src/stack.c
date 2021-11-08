@@ -2,9 +2,14 @@
 #include <stdio.h>
 #include <string.h>
 #include <limits.h>
+#include <inttypes.h>
+#include <sys/time.h>
 #include "stack.h"
 
 #define MAX_FREES_ALLOWED 1000
+
+static int all_stacks_sz = 0;
+static int max_all_stacks_sz = 0;
 
 int stack_peek(my_stack_t *head)
 {
@@ -15,6 +20,13 @@ my_stack_t* stack_push(my_stack_t **head, int value)
 {
     struct stack *new;
 
+    if (all_stacks_sz + 1 > MAX_STACK_SZ)
+    {
+        printf("Stack overflow\n");
+        *head = NULL;
+        return NULL;
+    }
+
     new = malloc(sizeof(struct stack));
 
     if (new == NULL)
@@ -23,6 +35,10 @@ my_stack_t* stack_push(my_stack_t **head, int value)
     new->value = value;
     new->prev = *head;
     *head = new;
+    all_stacks_sz++;
+
+    if (all_stacks_sz > max_all_stacks_sz)
+        max_all_stacks_sz = all_stacks_sz;
 
     return new;
 }
@@ -45,7 +61,7 @@ void stack_show_freed(my_stack_t *new)
     for (int i = 0; i < count; i++)
         if (new == freed[i])
             return;
-//всем привет это Даша Чикаго
+
     freed[count++] = new;
 }
 
@@ -53,10 +69,17 @@ my_stack_t* stack_pop(my_stack_t **head)
 {
     struct stack *new;
 
+    if (head == NULL)
+    {
+        printf("Stack is empty\n");
+        return NULL;
+    }
+
     new = (*head)->prev;
     stack_show_freed(*head);
     free(*head);
     *head = new;
+    all_stacks_sz--;
 
     return new;
 }
@@ -64,7 +87,6 @@ my_stack_t* stack_pop(my_stack_t **head)
 void insert_in_stack(my_stack_t **head, int value)
 {
     struct stack *stack = *head;
-    struct stack *next = NULL;
     struct stack *tmp = NULL;
 
     while (stack != NULL && stack_peek(stack) > value)
@@ -171,6 +193,11 @@ my_stack_t* stack_input()
 
         stack_push(&stack, (int)value);
 
+        if (stack == NULL)
+        {
+            return NULL;
+        }
+
     } while (1);
 
     return stack;
@@ -237,10 +264,19 @@ int stack_start()
         return EXIT_FAILURE;
     }
 
+    struct timeval start, end;
+    gettimeofday(&start, NULL);
+    gettimeofday(&end, NULL);
+
     my_stack_1 = stack_sort(&my_stack_1);
     my_stack_2 = stack_sort(&my_stack_2);
 
     my_stack_t *sorted = stack_merge(&my_stack_1, &my_stack_2);
+
+    gettimeofday(&end, NULL);
+
+    int64_t elapsed_time = (end.tv_sec - start.tv_sec) *
+                           1000000LL + (end.tv_usec - start.tv_usec);
 
     printf("\nSorted! Here is what we got:\n");
 
@@ -251,6 +287,9 @@ int stack_start()
     }
 
     stack_show_freed(NULL);
+
+    printf("\nSUMMARY\nTIME TAKEN:\t\t%10lld TICKS\nMEMORY TAKEN:\t%10lu BYTES",
+           elapsed_time, sizeof(my_stack_t) * max_all_stacks_sz);
 
     return EXIT_SUCCESS;
 }
@@ -278,10 +317,42 @@ static int cmp(const void *first, const void *second)
 
     return 1;
 }
- void arr_stack_sort(arr_stack_t **stack)
- {
-     qsort((*stack)->values, (*stack)->count_in_stack, sizeof(int), cmp);
- }
+
+void arr_stack_insert(arr_stack_t **head, int value)
+{
+    struct arr_stack *stack = *head;
+    struct arr_stack *tmp = arr_stack_create();
+
+    while (stack->count_in_stack != 0 && arr_stack_peek(stack) < value)
+    {
+        arr_stack_push(&tmp, arr_stack_peek(stack));
+        arr_stack_pop(&stack);
+    }
+
+    arr_stack_push(&stack, value);
+
+    while ((*tmp).count_in_stack != 0)
+    {
+        arr_stack_push(&stack, arr_stack_peek(tmp));
+        arr_stack_pop(&tmp);
+    }
+
+    *head = stack;
+}
+
+arr_stack_t *arr_stack_sort(arr_stack_t **stack)
+{
+    arr_stack_t *new = arr_stack_create();
+
+     while ((*stack)->count_in_stack != 0)
+     {
+         int value = arr_stack_peek(*stack);
+         arr_stack_insert(&new, value);
+         arr_stack_pop(stack);
+     }
+
+    return new;
+}
 
 arr_stack_t *arr_stack_input()
 {
@@ -347,10 +418,19 @@ int arr_stack_start()
         return EXIT_FAILURE;
     }
 
-    printf("\nSorted! Here is what we got\n");
+    struct timeval start, end;
+    gettimeofday(&start, NULL);
+    gettimeofday(&end, NULL);
 
     arr_stack_expand(&stack_1, &stack_2);
-    arr_stack_sort(&stack_1);
+    stack_1 = arr_stack_sort(&stack_1);
+
+    gettimeofday(&end, NULL);
+
+    int64_t elapsed_time = (end.tv_sec - start.tv_sec) *
+                    1000000LL + (end.tv_usec - start.tv_usec);
+
+    printf("\nSorted! Here is what we got\n");
 
     while (stack_1->count_in_stack != 0)
     {
@@ -360,6 +440,9 @@ int arr_stack_start()
 
     arr_stack_free(&stack_1);
     arr_stack_free(&stack_2);
+
+    printf("\nSUMMARY\nTIME TAKEN:\t\t%10lld TICKS\nMEMORY TAKEN:\t%10lu BYTES",
+           elapsed_time, sizeof(arr_stack_t) * 2);
 
     return EXIT_SUCCESS;
 }

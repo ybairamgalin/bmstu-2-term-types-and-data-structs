@@ -52,7 +52,10 @@ int main(void)
     else if (value == 0)
         return EXIT_SUCCESS;
     else
+    {
+        printf("Input error");
         return EXIT_FAILURE;
+    }
 
     return EXIT_SUCCESS;
 }
