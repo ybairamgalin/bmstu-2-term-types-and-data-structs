@@ -120,14 +120,28 @@ int del_sub_from_file(FILE *file)
 
     read_subs_from_file(file, subs, &sz);
 
-    printf("Введите id пользователя, которого необходимо удалить: ");
-    int to_del;
+    printf("Введите фамилию пользователя, которого необходимо удалить: ");
+    int to_del = -1;
 
-    if (scanf("%d", &to_del) != 1)
+    char surname[128];
+
+    if (input_string(surname, 128) != EXIT_SUCCESS)
         return EXIT_FAILURE;
 
-    if (to_del < 0 || to_del > sz)
+    for (int i = 0; i < sz; i++)
+    {
+        if (strcmp(surname, subs[i].last_name) == 0)
+        {
+            to_del = i;
+            break;
+        }
+    }
+
+    if (to_del == -1)
+    {
+        printf("Пользователь не найден\n");
         return EXIT_FAILURE;
+    }
 
     for (int i = to_del; i < sz - 1; i++)
         subs[i] = subs[i + 1];
@@ -139,6 +153,8 @@ int del_sub_from_file(FILE *file)
 
     fseek(file, 0, SEEK_SET);
     ftruncate(fileno(file), sizeof(subscriber_t) * (sz - 1));
+
+    printf("Удалено успешно\n");
 
     return EXIT_SUCCESS;
 }
