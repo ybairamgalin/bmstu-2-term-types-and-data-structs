@@ -122,7 +122,33 @@ int read_sparse_matrix_from_file(sparse_matrix_t *matrix, const char *filename)
     return EXIT_SUCCESS;
 }
 
-int input_sparse_matrix(sparse_matrix_t *matrix)
+typedef struct {
+    int row;
+    int col;
+    int value;
+} coords_t;
+
+int cmp_coord_values(const void *first, const void *second)
+{
+    coords_t *fir = (coords_t*)first;
+    coords_t *sec = (coords_t*)second;
+
+    if (fir->row < sec->row)
+        return -1;
+
+    if (fir->row > sec->row)
+        return 1;
+
+    if (fir->col < sec->col)
+        return -1;
+
+    if (fir->col > sec->col)
+        return 1;
+
+    return 0;
+}
+
+int input_sparse_matrix(sparse_matrix_t *matrix, const int rows, const int cols)
 {
     int rows_max, cols_max, non_zero_max;
 
@@ -131,6 +157,13 @@ int input_sparse_matrix(sparse_matrix_t *matrix)
     if (scanf("%d", &rows_max) != 1)
         return INPUT_ERR;
 
+    if (rows != ANY_SZ)
+        if (rows_max != rows)
+        {
+            printf("Cannot add such 2 matrices\n");
+            return INPUT_ERR;
+        }
+
     if (rows_max <= 0)
         return INPUT_ERR;
 
@@ -138,6 +171,13 @@ int input_sparse_matrix(sparse_matrix_t *matrix)
 
     if (scanf("%d", &cols_max) != 1)
         return INPUT_ERR;
+
+    if (cols != ANY_SZ)
+        if (cols_max != cols)
+        {
+            printf("Cannot add such 2 matrices\n");
+            return INPUT_ERR;
+        }
 
     if (cols_max <= 0)
         return INPUT_ERR;
@@ -154,15 +194,68 @@ int input_sparse_matrix(sparse_matrix_t *matrix)
     int non_zero_cur = 0;
     until_row_count_list_t *head = &(matrix->row_list);
 
+    coords_t values[1000];
+
+    for (int i = 0; i < matrix->count_non_zero; i++)
+    {
+        coords_t coord_value;
+        printf("Input non-zero element %d\n", i + 1);
+        printf("Input row: ");
+
+        if (scanf("%d", &coord_value.row) != 1)
+            return INPUT_ERR;
+
+        if (coord_value.row < 0 || coord_value.row >= matrix->count_rows)
+            return INPUT_ERR;
+
+        printf("Input col: ");
+
+        if (scanf("%d", &coord_value.col) != 1)
+            return INPUT_ERR;
+
+        if (coord_value.col < 0 || coord_value.col >= matrix->count_cols)
+            return INPUT_ERR;
+
+        printf("Input value: ");
+
+        if (scanf("%d", &coord_value.value) != 1)
+            return INPUT_ERR;
+
+        values[non_zero_cur++] = coord_value;
+    }
+
+    qsort(values, non_zero_cur, sizeof(coords_t), cmp_coord_values);
+
+    for (int i = 0; i < matrix->count_non_zero; i++)
+    {
+        if (values[i].value != 0)
+        {
+            matrix->values[i] = values[i].value;
+            matrix->cols[i] = values[i].col;
+        }
+    }
+
+    int pos = 0;
+
     for (int i = 0; i < matrix->count_rows; i++)
     {
         head = head->next;
 
-        printf("Enter row %d ((%ld integers divided with space)):\n", i + 1, matrix->count_cols);
-        add_matrix_row(matrix, &non_zero_cur, stdin);
+        while (values[pos].row == i)
+            pos++;
 
-        head->value = non_zero_cur;
+        head->value = pos;
     }
+
+//    for (int i = 0; i < matrix->count_rows; i++)
+//    {
+//        head = head->next;
+//
+//        printf("Enter row %d ((%ld integers divided with space)):\n", i + 1, matrix->count_cols);
+//        add_matrix_row(matrix, &non_zero_cur, stdin);
+//
+//        head->value = non_zero_cur;
+//    }
 
     return EXIT_SUCCESS;
 }
@@ -303,7 +396,7 @@ void sparse_matrix_start()
 
     printf("For matrix 1\n");
 
-    if (input_sparse_matrix(&first) != EXIT_SUCCESS)
+    if (input_sparse_matrix(&first, ANY_SZ, ANY_SZ) != EXIT_SUCCESS)
     {
         printf("Matrix input error\n");
         return;
@@ -311,7 +404,7 @@ void sparse_matrix_start()
 
     printf("For matrix 2\n");
 
-    if (input_sparse_matrix(&second) != EXIT_SUCCESS)
+    if (input_sparse_matrix(&second, first.count_rows, first.count_cols) != EXIT_SUCCESS)
     {
         printf("Matrix input error\n");
         return;
