@@ -1,8 +1,8 @@
 #ifndef _STACK_H_
 #define _STACK_H_
 
-#define MAX_STACK_SZ 100
-#define MAX_ARR_STACK_SZ 100
+#define MAX_STACK_SZ 1000
+#define MAX_ARR_STACK_SZ 1000
 
 struct stack {
     int value;
