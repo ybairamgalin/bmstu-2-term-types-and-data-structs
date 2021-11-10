@@ -288,7 +288,7 @@ int stack_start()
 
     stack_show_freed(NULL);
 
-    printf("\nSUMMARY\nTIME TAKEN:\t\t%10lld TICKS\nMEMORY TAKEN:\t%10lu BYTES",
+    printf("\nSUMMARY\nTIME TAKEN:\t%10lld TICKS\nMEMORY TAKEN:\t%10lu BYTES",
            elapsed_time, sizeof(my_stack_t) * max_all_stacks_sz);
 
     return EXIT_SUCCESS;
@@ -298,6 +298,12 @@ arr_stack_t *arr_stack_expand(arr_stack_t **dest, arr_stack_t **src)
 {
     while ((*src)->count_in_stack > 0)
     {
+        if (arr_stack_push(dest, arr_stack_peek(*src)) != (*src))
+        {
+            printf("Overflow\n");
+            return NULL;
+        }
+
         arr_stack_push(dest, arr_stack_peek(*src));
         arr_stack_pop(src);
     }
@@ -422,7 +428,9 @@ int arr_stack_start()
     gettimeofday(&start, NULL);
     gettimeofday(&end, NULL);
 
-    arr_stack_expand(&stack_1, &stack_2);
+    if (arr_stack_expand(&stack_1, &stack_2) == NULL)
+        return EXIT_FAILURE;
+
     stack_1 = arr_stack_sort(&stack_1);
 
     gettimeofday(&end, NULL);
@@ -441,7 +449,7 @@ int arr_stack_start()
     arr_stack_free(&stack_1);
     arr_stack_free(&stack_2);
 
-    printf("\nSUMMARY\nTIME TAKEN:\t\t%10lld TICKS\nMEMORY TAKEN:\t%10lu BYTES",
+    printf("\nSUMMARY\nTIME TAKEN:\t%10lld TICKS\nMEMORY TAKEN:\t%10lu BYTES\n",
            elapsed_time, sizeof(arr_stack_t) * 2);
 
     return EXIT_SUCCESS;

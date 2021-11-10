@@ -2,7 +2,7 @@
 #define _STACK_H_
 
 #define MAX_STACK_SZ 1000
-#define MAX_ARR_STACK_SZ 1000
+#define MAX_ARR_STACK_SZ 5
 
 struct stack {
     int value;
