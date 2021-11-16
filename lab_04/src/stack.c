@@ -24,7 +24,7 @@ my_stack_t* stack_push(my_stack_t **head, int value)
     {
         printf("Stack overflow\n");
         *head = NULL;
-        return NULL;
+        return *head;
     }
 
     new = malloc(sizeof(struct stack));
@@ -349,7 +349,9 @@ int stack_start()
             stack_1 = stack_push(&stack_1, (int)val);
 
             if (stack_1 == NULL)
-                continue;
+            {
+                return EXIT_FAILURE;
+            }
 
             printf("Success!\n");
         }
@@ -382,7 +384,9 @@ int stack_start()
             stack_2 = stack_push(&stack_2, (int)val);
 
             if (stack_2 == NULL)
-                continue;
+            {
+                return EXIT_FAILURE;
+            }
 
             printf("Success!\n");
         }
@@ -397,6 +401,7 @@ int stack_start()
             struct timeval start_time, end_time;
             gettimeofday(&start_time, NULL);
             gettimeofday(&end_time, NULL);
+            all_stacks_sz = 0;
 
             stack_1 = stack_sort(&stack_1);
             stack_2 = stack_sort(&stack_2);
