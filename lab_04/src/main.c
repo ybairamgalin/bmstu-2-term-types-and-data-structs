@@ -3,7 +3,7 @@
 #include <string.h>
 #include <stack.h>
 
-#define MAX_USER_INPUT_LNG 128
+
 
 int main(void)
 {

@@ -244,7 +244,208 @@ int arr_stack_peek(arr_stack_t *stack)
     return (stack->values[stack->count_in_stack - 1]);
 }
 
+void my_stack_print(my_stack_t *stack)
+{
+    my_stack_t *tail = stack;
+
+    if (tail == NULL)
+    {
+        printf("Empty\n");
+        return;
+    }
+
+    for ( ; tail; tail = tail->prev)
+        printf("value = %d\n", tail->value);
+}
+
 int stack_start()
+{
+    my_stack_t *stack_1 = NULL;
+    my_stack_t *stack_2 = NULL;
+
+    while (1)
+    {
+        printf("1 - pop element from stack 1\n"
+               "2 - pop element from stack 2\n"
+               "3 - push element to stack 1\n"
+               "4 - push element to stack 2\n"
+               "5 - sort two stacks\n"
+               "6 - print stack 1\n"
+               "7 - print stack 2\n");
+
+        char user_input[MAX_USER_INPUT_LNG];
+
+        if (fgets(user_input, sizeof(user_input), stdin) == NULL)
+        {
+            printf("Input failure\n");
+            continue;
+        }
+
+        if (user_input[strlen(user_input) - 1] != '\n')
+        {
+            printf("Input too long\n");
+            continue;
+        }
+
+        user_input[strlen(user_input) - 1] = '\0';
+
+        char *end;
+        long value = strtol(user_input, &end, 10);
+
+        if (end == user_input)
+        {
+            printf("Not a number. Input error\n");
+            continue;
+        }
+
+        if (value == 1)
+        {
+            if (stack_1 == NULL)
+            {
+                printf("Stack is empty!\nCannot pop from empty stack\n");
+                continue;
+            }
+
+            printf("Deleted value %d from stack 1\n", stack_peek(stack_1));
+            stack_1 = stack_pop(&stack_1);
+        }
+        else if (value == 2)
+        {
+            if (stack_2 == NULL)
+            {
+                printf("Stack is empty!\nCannot pop from empty stack\n");
+                continue;
+            }
+
+            printf("Deleted value %d from stack 2\n", stack_peek(stack_2));
+            stack_2 = stack_pop(&stack_2);
+        }
+        else if (value == 3)
+        {
+            printf("Enter a number (integer) to push: ");
+
+            if (fgets(user_input, sizeof(user_input), stdin) == NULL)
+            {
+                printf("Input failure\n");
+                continue;
+            }
+
+            if (user_input[strlen(user_input) - 1] != '\n')
+            {
+                printf("Input too long\n");
+                continue;
+            }
+
+            user_input[strlen(user_input) - 1] = '\0';
+
+            long val = strtol(user_input, &end, 10);
+
+            if (end == user_input)
+            {
+                printf("Not a number. Input error\n");
+                continue;
+            }
+
+            stack_1 = stack_push(&stack_1, (int)val);
+
+            if (stack_1 == NULL)
+                continue;
+
+            printf("Success!\n");
+        }
+        else if (value == 4)
+        {
+            printf("Enter a number (integer) to push: ");
+
+            if (fgets(user_input, sizeof(user_input), stdin) == NULL)
+            {
+                printf("Input failure\n");
+                continue;
+            }
+
+            if (user_input[strlen(user_input) - 1] != '\n')
+            {
+                printf("Input too long\n");
+                continue;
+            }
+
+            user_input[strlen(user_input) - 1] = '\0';
+
+            long val = strtol(user_input, &end, 10);
+
+            if (end == user_input)
+            {
+                printf("Not a number. Input error\n");
+                continue;
+            }
+
+            stack_2 = stack_push(&stack_2, (int)val);
+
+            if (stack_2 == NULL)
+                continue;
+
+            printf("Success!\n");
+        }
+        else if (value == 5)
+        {
+            if (stack_1 == NULL && stack_2 == NULL)
+            {
+                printf("Stacks are empty\n");
+                return EXIT_FAILURE;
+            }
+
+            struct timeval start_time, end_time;
+            gettimeofday(&start_time, NULL);
+            gettimeofday(&end_time, NULL);
+
+            stack_1 = stack_sort(&stack_1);
+            stack_2 = stack_sort(&stack_2);
+
+            my_stack_t *sorted = stack_merge(&stack_1, &stack_2);
+
+            gettimeofday(&end_time, NULL);
+
+            int64_t elapsed_time = (end_time.tv_sec - start_time.tv_sec) *
+                                   1000000LL + (end_time.tv_usec - start_time.tv_usec);
+
+            printf("\nSorted! Here is what we got:\n");
+
+            while (sorted != NULL)
+            {
+                printf("value = %d at %p\n", stack_peek(sorted), sorted);
+                stack_pop(&sorted);
+            }
+
+            stack_show_freed(NULL);
+
+            printf("\nSUMMARY\nTIME TAKEN:\t%10lld TICKS\nMEMORY TAKEN:\t%10lu BYTES",
+                   elapsed_time, sizeof(my_stack_t) * max_all_stacks_sz);
+
+            return EXIT_SUCCESS;
+        }
+        else if (value == 6)
+        {
+            my_stack_print(stack_1);
+        }
+        else if (value == 7)
+        {
+            my_stack_print(stack_2);
+        }
+        else if (value == 0)
+        {
+            break;
+        }
+        else
+        {
+            printf("No such menu option\n");
+            continue;
+        }
+    }
+
+    return EXIT_SUCCESS;
+}
+
+int stack_start_n()
 {
     printf("Stack 1\n");
     my_stack_t *my_stack_1 = stack_input();
@@ -296,19 +497,35 @@ int stack_start()
 
 arr_stack_t *arr_stack_expand(arr_stack_t **dest, arr_stack_t **src)
 {
+    if ((*dest)->count_in_stack + (*src)->count_in_stack > MAX_ARR_STACK_SZ)
+    {
+        printf("Overflow!\n");
+        return NULL;
+    }
+
     while ((*src)->count_in_stack > 0)
     {
-        if (arr_stack_push(dest, arr_stack_peek(*src)) != (*src))
-        {
-            printf("Overflow\n");
-            return NULL;
-        }
+        arr_stack_push(dest, arr_stack_peek(*src));
 
         arr_stack_push(dest, arr_stack_peek(*src));
         arr_stack_pop(src);
     }
 
     return *dest;
+}
+
+void arr_stack_print(arr_stack_t *stack)
+{
+    if (stack->count_in_stack == 0)
+    {
+        printf("Stack is empty\n");
+        return;
+    }
+
+    for (int i = stack->count_in_stack - 1; i >= 0; i--)
+    {
+        printf("arr_stack[%d] = %d\n", i, stack->values[i]);
+    }
 }
 
 static int cmp(const void *first, const void *second)
@@ -402,6 +619,206 @@ arr_stack_t *arr_stack_input()
 }
 
 int arr_stack_start()
+{
+    arr_stack_t *stack_1 = arr_stack_create();
+    arr_stack_t *stack_2 = arr_stack_create();
+
+    while (1)
+    {
+        printf("1 - pop element from stack 1\n"
+               "2 - pop element from stack 2\n"
+               "3 - push element to stack 1\n"
+               "4 - push element to stack 2\n"
+               "5 - sort two stacks\n"
+               "6 - print stack 1\n"
+               "7 - print stack 2\n");
+
+        char user_input[MAX_USER_INPUT_LNG];
+
+        if (fgets(user_input, sizeof(user_input), stdin) == NULL)
+        {
+            printf("Input failure\n");
+            continue;
+        }
+
+        if (user_input[strlen(user_input) - 1] != '\n')
+        {
+            printf("Input too long\n");
+            continue;
+        }
+
+        user_input[strlen(user_input) - 1] = '\0';
+
+        char *end;
+        long value = strtol(user_input, &end, 10);
+
+        if (end == user_input)
+        {
+            printf("Not a number. Input error\n");
+            continue;
+        }
+
+        if (value == 1)
+        {
+            if (stack_1->count_in_stack == 0)
+            {
+                printf("Stack is empty!\nCannot pop from empty stack\n");
+                continue;
+            }
+
+            printf("Deleted value %d from stack 1\n", arr_stack_peek(stack_1));
+            arr_stack_pop(&stack_1);
+        }
+        else if (value == 2)
+        {
+            if (stack_2->count_in_stack == 0)
+            {
+                printf("Stack is empty!\nCannot pop from empty stack\n");
+                continue;
+            }
+
+            printf("Deleted value %d from stack 2\n", arr_stack_peek(stack_2));
+            arr_stack_pop(&stack_2);
+        }
+        else if (value == 3)
+        {
+            if (stack_1->count_in_stack + 1 > MAX_ARR_STACK_SZ)
+            {
+                printf("Stack overflow\nPushing is now allowed\n");
+                continue;
+            }
+
+            printf("Enter a number to push: ");
+
+            if (fgets(user_input, sizeof(user_input), stdin) == NULL)
+            {
+                printf("Input failure\n");
+                continue;
+            }
+
+            if (user_input[strlen(user_input) - 1] != '\n')
+            {
+                printf("Input too long\n");
+                continue;
+            }
+
+            user_input[strlen(user_input) - 1] = '\0';
+
+            long val = strtol(user_input, &end, 10);
+
+            if (end == user_input)
+            {
+                printf("Not a number. Input error\n");
+                continue;
+            }
+
+            arr_stack_push(&stack_1, (int)val);
+            printf("Success!\n");
+        }
+        else if (value == 4)
+        {
+            if (stack_2->count_in_stack + 1 > MAX_ARR_STACK_SZ)
+            {
+                printf("Stack overflow\nPushing is now allowed\n");
+                continue;
+            }
+
+            printf("Enter a number to push: ");
+
+            if (fgets(user_input, sizeof(user_input), stdin) == NULL)
+            {
+                printf("Input failure\n");
+                continue;
+            }
+
+            if (user_input[strlen(user_input) - 1] != '\n')
+            {
+                printf("Input too long\n");
+                continue;
+            }
+
+            user_input[strlen(user_input) - 1] = '\0';
+
+            long val = strtol(user_input, &end, 10);
+
+            if (end == user_input)
+            {
+                printf("Not a number. Input error\n");
+                continue;
+            }
+
+            arr_stack_push(&stack_2, (int)val);
+            printf("Success!\n");
+        }
+        else if (value == 5)
+        {
+            if (stack_1 == NULL)
+            {
+                printf("Stack 1 is empty\n");
+                return EXIT_FAILURE;
+            }
+
+            if (stack_2 == NULL)
+            {
+                printf("Stack 2 is empty\n");
+                return EXIT_FAILURE;
+            }
+
+            struct timeval start_time, end_time;
+            gettimeofday(&start_time, NULL);
+            gettimeofday(&end_time, NULL);
+
+            if (arr_stack_expand(&stack_1, &stack_2) == NULL)
+                return EXIT_FAILURE;
+
+            stack_1 = arr_stack_sort(&stack_1);
+
+            gettimeofday(&end_time, NULL);
+
+            int64_t elapsed_time = (end_time.tv_sec - start_time.tv_sec) *
+                                   1000000LL + (end_time.tv_usec - start_time.tv_usec);
+
+            printf("\nSorted! Here is what we got\n");
+
+            while (stack_1->count_in_stack != 0)
+            {
+                printf("value = %d\n", arr_stack_peek(stack_1));
+                arr_stack_pop(&stack_1);
+            }
+
+            arr_stack_free(&stack_1);
+            arr_stack_free(&stack_2);
+
+            printf("\nSUMMARY\nTIME TAKEN:\t%10lld TICKS\nMEMORY TAKEN:\t%10lu BYTES\n",
+                   elapsed_time, sizeof(arr_stack_t) * 2);
+
+            return EXIT_SUCCESS;
+        }
+        else if (value == 6)
+        {
+            arr_stack_print(stack_1);
+        }
+        else if (value == 7)
+        {
+            arr_stack_print(stack_2);
+        }
+        else if (value == 0)
+        {
+            arr_stack_free(&stack_1);
+            arr_stack_free(&stack_2);
+            break;
+        }
+        else
+        {
+            printf("No such menu option\n");
+            continue;
+        }
+    }
+
+    return EXIT_SUCCESS;
+}
+
+int arr_stack_start_n()
 {
     arr_stack_t *stack_1 = arr_stack_create();
     arr_stack_t *stack_2 = arr_stack_create();
