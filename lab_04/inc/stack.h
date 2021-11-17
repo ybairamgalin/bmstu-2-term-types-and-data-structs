@@ -1,8 +1,8 @@
 #ifndef _STACK_H_
 #define _STACK_H_
 
-#define MAX_STACK_SZ 5
-#define MAX_ARR_STACK_SZ 10
+#define MAX_STACK_SZ 100
+#define MAX_ARR_STACK_SZ 100
 
 #define MAX_USER_INPUT_LNG 128
 

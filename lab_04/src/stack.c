@@ -262,6 +262,7 @@ int stack_start()
 {
     my_stack_t *stack_1 = NULL;
     my_stack_t *stack_2 = NULL;
+    printf("2 empty stacks were created\n");
 
     while (1)
     {
