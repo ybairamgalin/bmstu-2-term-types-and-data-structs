@@ -17,5 +17,7 @@ struct request {
 
 typedef struct request request_t;
 
+request_t request_create(int id, int start_time, type_t type);
+
 
 #endif

@@ -21,6 +21,10 @@ struct queue
     my_list_t *tail;
 };
 
+
+
+
+
 my_queue_t *queue_create(my_list_t *elem);
 void queue_free(my_queue_t *queue);
 

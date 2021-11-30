@@ -4,6 +4,7 @@
 #include <pthread.h>
 #include "queue.h"
 #include "service_simulation.h"
+#include "arr_queue.h"
 
 #define TICK    1000000LL
 #define SECOND  1000000000LL
@@ -36,6 +37,7 @@ static int time_first_type_generation()
 }
 
 static my_queue_t *queue;
+static arr_queue_t *arr_queue;
 static sim_info_t sim_info;
 
 static void simulation_info_header()
@@ -45,11 +47,8 @@ static void simulation_info_header()
     printf("+-----------------+--------------------+------------------+---------------------+---------------+-----------+----------------+\n");
 }
 
-static void simulation_init()
+static void sim_info_init()
 {
-    srand(time(NULL));
-    queue = queue_create(NULL);
-    queue = enqueue(queue, list_create(0, second, 0));
     sim_info.cur_queue = 1;
     sim_info.queue_sum = 0.0;
     sim_info.generated_first = 0;
@@ -61,6 +60,20 @@ static void simulation_init()
     sim_info.handle_time = 0;
     sim_info.first_wait_time = 0.0;
     simulation_info_header();
+}
+
+static void arr_simulation_init()
+{
+    arr_queue = arr_queue_create();
+    arr_queue = arr_enqueue(arr_queue, request_create(0, 0, second));
+    sim_info_init();
+}
+
+static void simulation_init()
+{
+    queue = queue_create(NULL);
+    queue = enqueue(queue, list_create(0, second, 0)); // list_create should receive request_t
+    sim_info_init();
 }
 
 static void simulation_destruct()
@@ -181,6 +194,7 @@ static void *req_generator(void *params)
 
 int simulation_start()
 {
+    srand(time(NULL));
     simulation_init();
 
     pthread_t handler;
@@ -200,6 +214,8 @@ int simulation_start()
     simulation_print_report();
 
     simulation_destruct();
+
+    arr_simulation_init();
 
     return EXIT_SUCCESS;
 }
