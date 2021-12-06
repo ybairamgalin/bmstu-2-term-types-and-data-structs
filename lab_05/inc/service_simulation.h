@@ -7,6 +7,7 @@ typedef struct sim_info sim_info_t;
 
 struct sim_info
 {
+    double expected_sim_time;
     int cur_queue;
     double queue_sum;
     int generated_first;
