@@ -15,6 +15,8 @@
 
 #define PRINT_INFO_GAP 100
 
+#define DEBUG
+
 static my_queue_t *queue;
 static arr_queue_t *arr_queue;
 static sim_info_t sim_info;
@@ -22,6 +24,8 @@ static sim_info_t sim_info;
 static int max_first_handling_time;
 static int max_second_handling_time;
 static int max_first_gen_time;
+
+pthread_mutex_t mutex;
 
 void set_simulation_parameters(const int first_type_handling_time,
                                const int second_type_handling_time,
@@ -61,7 +65,7 @@ static double count_sim_time()
 
     double avg_first_gen_time = (double)max_first_gen_time / 2.0;
 
-    double total_gen_time = avg_first_gen_time * avg_first_gen_time;
+    double total_gen_time = avg_first_gen_time * EXPECTED_FIRST_TYPE_REQUESTS;
     double total_handling_time = avg_first_handling_time * EXPECTED_FIRST_TYPE_REQUESTS +
             (1.0 / 3.0) * EXPECTED_FIRST_TYPE_REQUESTS * avg_second_handling_time;
 
@@ -144,7 +148,7 @@ static void simulation_print_info()
            sim_info.handled_first, sim_info.generated_first,
            sim_info.handled_second, sim_info.generated_second,
            sim_info.cur_queue, sim_info.queue_sum / sim_info.generated_first,
-           sim_info.first_wait_time / sim_info.handled_first);
+           sim_info.queue_sum / sim_info.generated_first * (max_first_handling_time / 2.0));
     printf("+-----------------+--------------------+------------------+---------------------+---------------+-----------+----------------+\n");
 }
 
@@ -155,13 +159,56 @@ static void simulation_info_header()
     printf("+-----------------+--------------------+------------------+---------------------+---------------+-----------+----------------+\n");
 }
 
+static int min_int(int a, int b)
+{
+    return (a < b) ? a : b;
+}
+
+void print_mem_info()
+{
+    extern my_list_t *allocated_chunks[100];
+    extern my_list_t *freed_chunks[100];
+
+    extern int currently_allocated;
+    extern int currently_freed;
+
+    printf("+----------------------------------------------------------------------------------------------+\n");
+    printf("|                                   LAST %d ALLOCATED ADDRESSES                               |\n", 100);
+    printf("+------------------+------------------+------------------+------------------+------------------+\n");
+
+    for (int i = 0; i < min_int(100, currently_allocated); i++)
+    {
+        printf("|%18p", (void*)allocated_chunks[i]);
+
+        if (i % 5 == 4)
+        {
+            printf("|\n");
+            printf("+------------------+------------------+------------------+------------------+------------------+\n");
+        }
+    }
+
+    printf("|                                   LAST %d FREED ADDRESSES                                   |\n", 100);
+    printf("+------------------+------------------+------------------+------------------+------------------+\n");
+
+    for (int i = 0; i < min_int(100, currently_freed); i++)
+    {
+        printf("|%18p", (void*)freed_chunks[i]);
+
+        if (i % 5 == 4)
+        {
+            printf("|\n");
+            printf("+------------------+------------------+------------------+------------------+------------------+\n");
+        }
+    }
+}
+
 static void simulation_init()
 {
     srand(time(NULL));
-    set_simulation_parameters(4, 4, 5);
 
     queue = queue_create(NULL);
     arr_queue = arr_queue_create();
+    pthread_mutex_init(&mutex, NULL);
 
     request_t request = { 0, 0, second };
     queue = enqueue(queue, list_create(0, second, 0));
@@ -188,6 +235,7 @@ static void simulation_destruct()
 {
     queue_free(queue);
     arr_queue_free(arr_queue);
+    pthread_mutex_destroy(&mutex);
 }
 
 static void insert_2nd_type()
@@ -200,12 +248,18 @@ static void insert_2nd_type()
 
 static void *req_handler(void *params)
 {
+    pthread_mutex_lock(&mutex);
+
     while (sim_info.handled_first < EXPECTED_FIRST_TYPE_REQUESTS)
     {
         if (is_empty(queue))
         {
+            pthread_mutex_unlock(&mutex);
             wait_units(1);
+            pthread_mutex_lock(&mutex);
+
             sim_info.halt_time += 1;
+            sim_info.handle_time += 1;
             continue;
         }
 
@@ -218,7 +272,7 @@ static void *req_handler(void *params)
 
         struct timeval start_arr, end_arr;
         gettimeofday(&start_arr, NULL);
-        request_t request_arr = arr_dequeue(arr_queue);
+        arr_dequeue(arr_queue);
         gettimeofday(&end_arr, NULL);
         sim_info.time_taken_arr += (end_arr.tv_sec - start_arr.tv_sec) *
                                    1000000LL + (end_arr.tv_usec - start_arr.tv_usec);
@@ -230,10 +284,12 @@ static void *req_handler(void *params)
             sim_info.handled_first++;
             sim_info.cur_queue--;
 
+            pthread_mutex_unlock(&mutex);
             wait_units(handle_time);
+            pthread_mutex_lock(&mutex);
 
-            sim_info.handle_time += handle_time;
             sim_info.first_wait_time += sim_info.handle_time - request->start_time;
+            sim_info.handle_time += handle_time;
 
             if (sim_info.handled_first % PRINT_INFO_GAP == 0)
                 simulation_print_info();
@@ -244,7 +300,9 @@ static void *req_handler(void *params)
             sim_info.handled_second++;
             sim_info.cur_queue--;
 
+            pthread_mutex_unlock(&mutex);
             wait_units(handle_time);
+            pthread_mutex_lock(&mutex);
 
             sim_info.handle_time += handle_time;
             insert_2nd_type();
@@ -253,20 +311,25 @@ static void *req_handler(void *params)
         list_free(request);
     }
 
+    pthread_mutex_unlock(&mutex);
     pthread_exit(EXIT_SUCCESS);
 }
 
 static void *req_generator(void *params)
 {
+    pthread_mutex_lock(&mutex);
+
     while (sim_info.generated_first < EXPECTED_FIRST_TYPE_REQUESTS)
     {
         int gen_time = time_first_type_generation();
 
+        pthread_mutex_unlock(&mutex);
         wait_units(gen_time);
+        pthread_mutex_lock(&mutex);
 
         struct timeval start_list, end_list;
         gettimeofday(&start_list, NULL);
-        enqueue(queue, list_create(sim_info.generated_first, first,
+        queue = enqueue(queue, list_create(sim_info.generated_first, first,
                                    sim_info.gen_time + gen_time));
         gettimeofday(&end_list, NULL);
         sim_info.time_taken_list += (end_list.tv_sec - start_list.tv_sec) *
@@ -281,6 +344,7 @@ static void *req_generator(void *params)
                 1000000LL + (end_arr.tv_usec - start_arr.tv_usec);
 
         sim_info.queue_sum += sim_info.cur_queue;
+
         sim_info.generated_first++;
         sim_info.cur_queue++;
         sim_info.gen_time += gen_time;
@@ -289,6 +353,7 @@ static void *req_generator(void *params)
             sim_info.max_queue = sim_info.cur_queue;
     }
 
+    pthread_mutex_unlock(&mutex);
     pthread_exit(EXIT_SUCCESS);
 }
 
@@ -297,15 +362,10 @@ int simulation_start()
     simulation_init();
 
     pthread_t handler;
-    pthread_attr_t handler_attr;
     pthread_t generator;
-    pthread_attr_t generator_attr;
 
-    pthread_attr_init(&handler_attr);
-    pthread_create(&handler, &handler_attr, req_handler, NULL);
-
-    pthread_attr_init(&generator_attr);
-    pthread_create(&generator, &generator_attr, req_generator, NULL);
+    pthread_create(&handler, NULL, req_handler, NULL);
+    pthread_create(&generator, NULL, req_generator, NULL);
 
     pthread_join(generator, NULL);
     pthread_join(handler, NULL);

@@ -2,12 +2,22 @@
 #include <stdio.h>
 #include "queue.h"
 
+#define REMEMBER_FREE 100
+
+my_list_t *allocated_chunks[REMEMBER_FREE];
+my_list_t *freed_chunks[REMEMBER_FREE];
+
+int currently_allocated = 0;
+int currently_freed = 0;
+
 my_list_t *list_create(int id, type_t type, int start_time)
 {
     my_list_t *list = malloc(sizeof(my_list_t));
 
     if (list == NULL)
         return NULL;
+
+    allocated_chunks[currently_allocated++ % REMEMBER_FREE] = list;
 
     list->id = id;
     list->type = type;
@@ -19,6 +29,7 @@ my_list_t *list_create(int id, type_t type, int start_time)
 
 void list_free(my_list_t *list)
 {
+    freed_chunks[currently_freed++ % REMEMBER_FREE] = list;
     free(list);
 }
 
@@ -53,7 +64,7 @@ void queue_free(my_queue_t *queue)
 
 my_queue_t *enqueue(my_queue_t *queue, my_list_t *elem)
 {
-    if (queue->tail== NULL)
+    if (queue->tail == NULL || queue->head == NULL)
     {
         queue->head = elem;
         queue->tail = elem;
@@ -91,7 +102,10 @@ my_queue_t *insert_max_pos(my_queue_t *queue, my_list_t *elem, const int pos)
 my_list_t *dequeue(my_queue_t *queue)
 {
     if (queue->head == NULL)
+    {
+        queue->tail = NULL;
         return NULL;
+    }
 
     my_list_t *elem = queue->head;
 

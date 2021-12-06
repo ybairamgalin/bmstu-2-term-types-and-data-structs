@@ -24,5 +24,9 @@ struct sim_info
 };
 
 int simulation_start();
+void set_simulation_parameters(const int first_type_handling_time,
+                               const int second_type_handling_time,
+                               const int first_type_gen_time);
+void print_mem_info();
 
 #endif
