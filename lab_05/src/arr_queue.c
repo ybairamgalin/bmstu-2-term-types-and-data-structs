@@ -51,9 +51,9 @@ arr_queue_t *arr_enqueue(arr_queue_t *queue, request_t elem)
 
     if (queue->tail == queue->head)
     {
-        printf("OVERFLOW");
+        fprintf(stderr, "arr_enqueue -> overflow occurred\n");
         arr_queue_free(queue);
-        return NULL;
+        exit(1);
     }
 
     return queue;

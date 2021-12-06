@@ -1,6 +1,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
+#include <inttypes.h>
+#include <sys/time.h>
 #include <pthread.h>
 #include "queue.h"
 #include "arr_queue.h"
@@ -9,15 +11,12 @@
 #define TICK    1000000LL
 #define SECOND  1000000000LL
 
-#define MAX_FIRST_TYPE_HANDLING_UNITS 5
-#define MAX_SECOND_TYPE_HANDLING_UNITS 5
-#define MAX_FIRST_TYPE_GEN_UNITS 6
-
 #define MAX_2ND_TYPE_QUEUE_POS 4
 
 #define PRINT_INFO_GAP 100
 
 static my_queue_t *queue;
+static arr_queue_t *arr_queue;
 static sim_info_t sim_info;
 
 static int max_first_handling_time;
@@ -71,18 +70,72 @@ static double count_sim_time()
 
 static void simulation_print_report()
 {
-    printf("Simulation is done. Here is the final data:\n"
-           "expected simulation time:     %8.1lf time units\n"
-           "total simulation time:        %8d time units\n"
-           "expected and sim difference:  %8.1lf %%\n"
-           "total halt time:              %8d time units\n"
-           "handled first type requests:  %8d requests\n"
-           "handled second type requests: %8d requests\n"
-           "\n",
-           sim_info.expected_sim_time,
-           (sim_info.gen_time > sim_info.handle_time) ? (sim_info.gen_time) : sim_info.handle_time,
-           (((sim_info.gen_time > sim_info.handle_time) ? (sim_info.gen_time) : sim_info.handle_time) / sim_info.expected_sim_time - 1.0) * 100.0,
-           sim_info.halt_time, sim_info.handled_first, sim_info.handled_second);
+    printf("+----------------------------------------------------------+\n");
+    printf("|             SIMULATION IS DONE. FINAL REPORT             |\n");
+
+
+    // +32+10+15+
+    printf("+--------------------------------+----------+--------------+\n");
+
+    printf("|%32s", "EXPECTED TIME");
+    printf("|%10.1lf", sim_info.expected_sim_time);
+    printf("|%14s|\n", "time units");
+
+    printf("+--------------------------------+----------+--------------+\n");
+
+    printf("|%32s", "SIMULATION TIME");
+    printf("|%10.1d", (sim_info.gen_time > sim_info.handle_time) ? (sim_info.gen_time) : sim_info.handle_time);
+    printf("|%14s|\n", "time units");
+
+    printf("+--------------------------------+----------+--------------+\n");
+
+    printf("|%32s", "EXPECTED AND SIMULATION DIFF");
+    printf("|%10.1lf", (((sim_info.gen_time > sim_info.handle_time) ? (sim_info.gen_time) : sim_info.handle_time) / sim_info.expected_sim_time - 1.0) * 100.0);
+    printf("|%14s|\n", "%");
+
+    printf("+--------------------------------+----------+--------------+\n");
+
+    printf("|%32s", "HALT TIME");
+    printf("|%10d", sim_info.halt_time);
+    printf("|%14s|\n", "time units");
+
+    printf("+--------------------------------+----------+--------------+\n");
+
+    printf("|%32s", "HANDLED FIRST TYPE");
+    printf("|%10d", sim_info.handled_first);
+    printf("|%14s|\n", "time units");
+
+    printf("+--------------------------------+----------+--------------+\n");
+
+    printf("|%32s", "HANDLED SECOND TYPE");
+    printf("|%10d", sim_info.handled_second);
+    printf("|%14s|\n", "time units");
+
+    printf("+--------------------------------+----------+--------------+\n");
+
+    printf("|%32s", "LIST QUEUE TIME TAKEN");
+    printf("|%10lld", sim_info.time_taken_list);
+    printf("|%14s|\n", "ticks");
+
+    printf("+--------------------------------+----------+--------------+\n");
+
+    printf("|%32s", "LIST QUEUE MEMORY TAKEN");
+    printf("|%10lu", sizeof(struct queue) + sizeof(my_list_t) * sim_info.max_queue);
+    printf("|%14s|\n", "bytes");
+
+    printf("+--------------------------------+----------+--------------+\n");
+
+    printf("|%32s", "ARR QUEUE TIME TAKEN");
+    printf("|%10lld", sim_info.time_taken_arr);
+    printf("|%14s|\n", "ticks");
+
+    printf("+--------------------------------+----------+--------------+\n");
+
+    printf("|%32s", "ARR QUEUE MEMORY TAKEN");
+    printf("|%10lu", sizeof(arr_queue_t));
+    printf("|%14s|\n", "bytes");
+
+    printf("+--------------------------------+----------+--------------+\n");
 }
 
 static void simulation_print_info()
@@ -108,7 +161,12 @@ static void simulation_init()
     set_simulation_parameters(4, 4, 5);
 
     queue = queue_create(NULL);
+    arr_queue = arr_queue_create();
+
+    request_t request = { 0, 0, second };
     queue = enqueue(queue, list_create(0, second, 0));
+    arr_queue = arr_enqueue(arr_queue, request);
+
     sim_info.cur_queue = 1;
     sim_info.queue_sum = 0.0;
     sim_info.generated_first = 0;
@@ -120,12 +178,16 @@ static void simulation_init()
     sim_info.handle_time = 0;
     sim_info.first_wait_time = 0.0;
     sim_info.expected_sim_time = count_sim_time();
+    sim_info.time_taken_list = 0;
+    sim_info.time_taken_arr = 0;
+    sim_info.max_queue = 1;
     simulation_info_header();
 }
 
 static void simulation_destruct()
 {
     queue_free(queue);
+    arr_queue_free(arr_queue);
 }
 
 static void insert_2nd_type()
@@ -143,12 +205,23 @@ static void *req_handler(void *params)
         if (is_empty(queue))
         {
             wait_units(1);
-
             sim_info.halt_time += 1;
             continue;
         }
 
+        struct timeval start_list, end_list;
+        gettimeofday(&start_list, NULL);
         my_list_t *request = dequeue(queue);
+        gettimeofday(&end_list, NULL);
+        sim_info.time_taken_list += (end_list.tv_sec - start_list.tv_sec) *
+                                    1000000LL + (end_list.tv_usec - start_list.tv_usec);
+
+        struct timeval start_arr, end_arr;
+        gettimeofday(&start_arr, NULL);
+        request_t request_arr = arr_dequeue(arr_queue);
+        gettimeofday(&end_arr, NULL);
+        sim_info.time_taken_arr += (end_arr.tv_sec - start_arr.tv_sec) *
+                                   1000000LL + (end_arr.tv_usec - start_arr.tv_usec);
 
         // process req handling
         if (request->type == first)
@@ -191,12 +264,29 @@ static void *req_generator(void *params)
 
         wait_units(gen_time);
 
+        struct timeval start_list, end_list;
+        gettimeofday(&start_list, NULL);
         enqueue(queue, list_create(sim_info.generated_first, first,
                                    sim_info.gen_time + gen_time));
+        gettimeofday(&end_list, NULL);
+        sim_info.time_taken_list += (end_list.tv_sec - start_list.tv_sec) *
+                                    1000000LL + (end_list.tv_usec - start_list.tv_usec);
+
+        struct timeval start_arr, end_arr;
+        request_t request = { sim_info.generated_first, sim_info.gen_time + gen_time, first};
+        gettimeofday(&start_arr, NULL);
+        arr_enqueue(arr_queue, request);
+        gettimeofday(&end_arr, NULL);
+        sim_info.time_taken_arr += (end_arr.tv_sec - start_arr.tv_sec) *
+                1000000LL + (end_arr.tv_usec - start_arr.tv_usec);
+
         sim_info.queue_sum += sim_info.cur_queue;
         sim_info.generated_first++;
         sim_info.cur_queue++;
         sim_info.gen_time += gen_time;
+
+        if (sim_info.max_queue < sim_info.cur_queue)
+            sim_info.max_queue = sim_info.cur_queue;
     }
 
     pthread_exit(EXIT_SUCCESS);

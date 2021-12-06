@@ -1,7 +1,7 @@
 #ifndef _ARR_QUEUE_H_
 #define _ARR_QUEUE_H_
 
-#define QUEUE_CAPACITY 100
+#define QUEUE_CAPACITY 400
 
 #include "request.h"
 
