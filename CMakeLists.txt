@@ -5,7 +5,15 @@ set(CMAKE_C_STANDARD 99)
 
 #include_directories(lab_03)
 
-include_directories(lab_03/inc)
+# include_directories(lab_04/inc)
+
+add_executable(bmstu_2_term_types_and_data_structs
+        lab_04/src/main.c
+        lab_04/src/stack.c
+        lab_04/inc/stack.h
+        )
+
+# include_directories(lab_03/inc)
 
 add_executable(bmstu_2_term_types_and_data_structs
         lab_03/inc/sparse_matrix.h
