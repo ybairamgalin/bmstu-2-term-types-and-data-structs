@@ -3,7 +3,7 @@
 
 #define MAX_WORD_LNG 30
 
-#define HASH_TABLE_CAPACITY 1000000
+#define HASH_TABLE_CAPACITY 15
 
 #include "data.h"
 
@@ -26,6 +26,7 @@ void hash_table_set(hash_table_t *table, data_t *data);
 data_t *hash_table_get(hash_table_t *table, const char *restrict key);
 void hash_table_remove(hash_table_t *table, const char *restrict key);
 
+hash_table_t *has_table_restruct(hash_table_t *table, const long depth);
 
 void hash_table_print(const hash_table_t *table);
 #endif

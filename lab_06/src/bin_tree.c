@@ -4,6 +4,14 @@
 #include <limits.h>
 #include "bin_tree.h"
 
+int total_cmp = 0;
+
+static int my_strcmp(const char *restrict first, const char *restrict second)
+{
+    total_cmp++;
+    return strcmp(first, second);
+}
+
 bin_tree_t *bin_cree_create(data_t *data)
 {
     bin_tree_t *new_tree = malloc(sizeof(bin_tree_t));
@@ -131,7 +139,7 @@ data_t *bin_tree_find(bin_tree_t *tree, const char *key)
     if (!tree)
         return NULL;
 
-    int cmp = strcmp(key, tree->data->word);
+    int cmp = my_strcmp(key, tree->data->word);
 
     if (cmp == 0)
         return tree->data;

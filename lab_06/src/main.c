@@ -8,7 +8,7 @@
 #include "data.h"
 #include "bin_tree.h"
 
-#define FIND_TIMES 10q
+#define FIND_TIMES 10
 
 int read_string(FILE *file, char *buf)
 {
@@ -54,7 +54,7 @@ void measure_time_find(const char *restrict filename)
 
     char words_from_file[100000][40];
     int number_words = 0;
-    file = fopen(filename, "r");
+    file = fopen(filename, "r+");
 
     if (file == NULL)
     {
@@ -73,9 +73,16 @@ void measure_time_find(const char *restrict filename)
     unsigned long long total_elapsed_tree_table = 0;
     unsigned long long total_elapsed_tree_file = 0;
 
+    unsigned long long total_cmp_tree = 0;
+    unsigned long long total_cmp_tree_balanced = 0;
+    unsigned long long total_cmp_table = 0;
+    unsigned long long total_cmp_file = 0;
+
     for (int i = 0; i < number_words; i++)
     {
         clock_t begin, end;
+        extern int total_cmp;
+        total_cmp = 0;
         begin = clock();
 
         for (int j = 0; j < FIND_TIMES; j++)
@@ -83,6 +90,8 @@ void measure_time_find(const char *restrict filename)
 
         end = clock();
         total_elapsed_tree += end - begin;
+        total_cmp_tree += total_cmp;
+        total_cmp = 0;
         begin = clock();
 
         for (int j = 0; j < FIND_TIMES; j++)
@@ -90,7 +99,9 @@ void measure_time_find(const char *restrict filename)
 
         end = clock();
         total_elapsed_tree_balanced += end - begin;
-
+        total_cmp_tree_balanced += total_cmp;
+        extern int total_comparisons_hash;
+        total_comparisons_hash = 0;
         begin = clock();
 
         for (int j = 0; j < FIND_TIMES; j++)
@@ -98,6 +109,7 @@ void measure_time_find(const char *restrict filename)
 
         end = clock();
         total_elapsed_tree_table += end - begin;
+        total_cmp_table += total_comparisons_hash;
 
         for (int j = 0; j < FIND_TIMES; j++)
         {
@@ -105,13 +117,20 @@ void measure_time_find(const char *restrict filename)
             begin = clock();
 
             while (read_string(file, buf) == EXIT_SUCCESS)
+            {
+                total_cmp_file++;
+
                 if (strcmp(buf, words_from_file[i]) == 0)
                     break;
+            }
+
 
             end = clock();
             total_elapsed_tree_file += end - begin;
         }
     }
+
+    printf("FOR FIND OPERATION:\n");
 
     printf("Avg elapsed tree: %lf\n"
            "Avg elapsed balanced tree: %lf\n"
@@ -121,6 +140,72 @@ void measure_time_find(const char *restrict filename)
            (double)total_elapsed_tree_balanced / number_words,
            (double)total_elapsed_tree_table / number_words,
            (double)total_elapsed_tree_file / number_words);
+
+    printf("Mem taken tree: %ld\n"
+           "Mem taken balanced tree: %ld\n"
+           "Mem taken hash table: %ld\n"
+           "\n", sizeof(bin_tree_t) * number_words + sizeof(data_t) * number_words,
+           sizeof(bin_tree_t) * number_words + sizeof(data_t) * number_words,
+           sizeof(hash_table_t) + sizeof(value_list_t) * number_words +
+           sizeof(data_t) + number_words);
+
+    printf("Avg comparisons tree: %lf\n"
+           "Avg comparisons balanced tree: %lf\n"
+           "Avg comparisons hash table: %lf\n"
+           "Avg comparisons file: %lf\n"
+           "\n", (double)total_cmp_tree / (number_words * FIND_TIMES),
+           (double)total_cmp_tree_balanced / (number_words * FIND_TIMES),
+           (double)total_cmp_table / (number_words * FIND_TIMES),
+           (double)total_cmp_file / (number_words * FIND_TIMES));
+
+    clock_t begin, end;
+    data_t *data = data_create("5555");
+    begin = clock();
+
+    total_elapsed_tree = 0;
+    total_elapsed_tree_table = 0;
+    total_elapsed_tree_balanced = 0;
+    total_elapsed_tree_file = 0;
+
+    for (int j = 0; j < FIND_TIMES; j++)
+        bin_tree_insert_dn_balance(tree, data);
+
+    end = clock();
+    total_elapsed_tree += end - begin;
+    begin = clock();
+
+    for (int j = 0; j < FIND_TIMES; j++)
+        bin_tree_insert(tree_balanced, data);
+
+    end = clock();
+    total_elapsed_tree_balanced += end - begin;
+    begin = clock();
+
+    for (int j = 0; j < FIND_TIMES; j++)
+        hash_table_set(table, data);
+
+    end = clock();
+    total_elapsed_tree_table += end - begin;
+
+    fseek(file, 0, SEEK_END);
+    begin = clock();
+
+    for (int j = 0; j < FIND_TIMES; j++)
+        fprintf(file, "%s\n", data->word);
+
+    end = clock();
+    total_elapsed_tree_file += end - begin;
+
+    printf("FOR INSERT OPERATION:\n");
+
+    printf("Avg elapsed tree: %lf\n"
+           "Avg elapsed balanced tree: %lf\n"
+           "Avg elapsed table: %lf\n"
+           "Avg elapsed file: %lf\n"
+           "\n", (double)total_elapsed_tree,
+           (double)total_elapsed_tree_balanced,
+           (double)total_elapsed_tree_table,
+           (double)total_elapsed_tree_file);
 
     fclose(file);
 }
@@ -212,6 +297,7 @@ int main(void)
                "7 - Delete field\n"
                "8 - Find field\n"
                "9 - Measure time\n"
+               "10 - Set max hash table depth\n"
                "0 - Exit\n");
 
         long num;
@@ -284,6 +370,22 @@ int main(void)
         else if (num == 9)
         {
             measure_time();
+        }
+        else if (num == 10)
+        {
+            long depth;
+            printf("Input depth value: ");
+
+            if (read_num(stdin, &depth) != EXIT_SUCCESS)
+                continue;
+
+            if (depth <= 1)
+            {
+                printf("Number is too small\n");
+                continue;
+            }
+
+            table = has_table_restruct(table, depth);
         }
         else if (num == 0)
         {

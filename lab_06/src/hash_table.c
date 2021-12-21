@@ -3,6 +3,15 @@
 #include <string.h>
 #include "hash_table.h"
 
+int total_comparisons_hash = 0;
+
+static int my_strcmp(const char *restrict first, const char *restrict second)
+{
+    total_comparisons_hash++;
+
+    return strcmp(first, second);
+}
+
 static unsigned int hash_ly(const char *restrict str)
 {
     unsigned int hash = 0;
@@ -74,7 +83,7 @@ hash_table_t *hash_table_create(data_t *data)
     for (size_t i = 0; i < HASH_TABLE_CAPACITY; i++)
         table->values[i] = NULL;
 
-    table->hash_foo = hash_ly;
+    table->hash_foo = hash_faq6;
 
     if (data)
         hash_table_set(table, data);
@@ -89,10 +98,72 @@ data_t *hash_table_get(hash_table_t *table, const char *restrict key)
     value_list_t *head = table->values[index];
 
     for ( ; head; head = head->next)
-        if (strcmp(head->data->word, key) == 0)
+        if (my_strcmp(head->data->word, key) == 0)
             return head->data;
 
     return NULL;
+}
+
+static long hash_table_depth(hash_table_t *table)
+{
+    long max_depth = 0;
+
+    for (int i = 0; i < HASH_TABLE_CAPACITY; i++)
+    {
+        value_list_t *head = table->values[i];
+        long cur_depth = 0;
+
+        for ( ; head; head = head->next)
+            cur_depth++;
+
+        if (cur_depth > max_depth)
+            max_depth = cur_depth;
+    }
+
+    return max_depth;
+}
+
+hash_table_t *has_table_restruct(hash_table_t *table, const long depth)
+{
+    printf("Current depth: %ld\n", hash_table_depth(table));
+
+    if (depth > hash_table_depth(table))
+    {
+        printf("Restruct not required\n");
+        return table;
+    }
+
+    hash_table_t *new_table = hash_table_create(NULL);
+
+    if (table->hash_foo == hash_ly)
+        new_table->hash_foo = hash_faq6;
+    else if (table->hash_foo == hash_faq6)
+        new_table->hash_foo = hash_ly;
+
+    for (int i = 0; i < HASH_TABLE_CAPACITY; i++)
+    {
+        value_list_t *head = table->values[i];
+
+        for ( ; head; head = head->next)
+            hash_table_set(new_table, head->data);
+    }
+
+    long cmp = hash_table_depth(new_table) - hash_table_depth(table);
+
+    if (cmp > 0)
+    {
+        printf("More cmps than before...\n");
+    }
+    else if (cmp < 0)
+    {
+        printf("Less cmps than before\n");
+    }
+    else
+    {
+        printf("Seems to have no effect\n");
+    }
+
+    return new_table;
 }
 
 void hash_table_print(const hash_table_t *table)

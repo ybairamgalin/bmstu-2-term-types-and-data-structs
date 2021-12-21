@@ -11,7 +11,6 @@ Ball
 Paper
 Bedroom
 Nose
-Gipsy
 F1
 Mercedes
 Bmw
