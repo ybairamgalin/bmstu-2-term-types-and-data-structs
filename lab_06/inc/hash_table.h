@@ -3,7 +3,7 @@
 
 #define MAX_WORD_LNG 30
 
-#define HASH_TABLE_CAPACITY 15
+#define HASH_TABLE_CAPACITY 31
 
 #include "data.h"
 
