@@ -78,6 +78,42 @@ matrix_t *graph_shortest_paths_matrix(graph_t graph)
     return paths;
 }
 
+matrix_t *graph_shortest_paths_paths(graph_t graph)
+{
+    matrix_t *paths = malloc(sizeof(matrix_t));
+    matrix_t *next = malloc(sizeof(matrix_t));
+
+    if (create_matrix(paths, graph->sz, graph->sz) != EXIT_SUCCESS)
+        return NULL;
+
+    if (create_matrix(next, graph->sz, graph->sz) != EXIT_SUCCESS)
+        return NULL;
+
+    matrix_cpy(paths, *(graph->adjacency_matrix));
+
+    for (int i = 0; i < graph->sz; i++)
+        for (int j = 0; j < graph->sz; j++)
+        {
+            next->values[i][j] = j;
+        }
+
+    for (int k = 0; k < graph->sz; k++)
+        for (int i = 0; i < graph->sz; i++)
+            for (int j = 0; j < graph->sz; j++)
+            {
+                if (paths->values[i][k] == INF || paths->values[k][j] == INF)
+                    continue;
+
+                if (paths->values[i][j] > paths->values[i][k] + paths->values[k][j])
+                {
+                    paths->values[i][j] = paths->values[i][k] + paths->values[k][j];
+                    next->values[i][j] = next->values[i][k];
+                }
+            }
+
+    return next;
+}
+
 void graph_print_matrix(graph_t graph)
 {
     print_matrix(*(graph->adjacency_matrix));
@@ -91,6 +127,106 @@ void graph_print_matrix(graph_t graph)
 //
 //        printf("\n");
 //    }
+}
+
+int graph_city_shortest_dist_sum(graph_t graph, int *dist)
+{
+    matrix_t *matrix = graph_shortest_paths_matrix(graph);
+
+    if (matrix == NULL)
+    {
+        fprintf(stderr, "Error occurred\n");
+        return -1;
+    }
+
+    int max_sum = INF;
+    int index = 0;
+
+    for (int i = 0; i < graph->sz; i++)
+    {
+        int sum = 0;
+
+        for (int j = 0; j < graph->sz; j++)
+        {
+            if (matrix->values[i][j] == INF)
+            {
+                sum = INF;
+                break;
+            }
+
+             sum += matrix->values[i][j];
+        }
+
+        if (sum < max_sum)
+        {
+            max_sum = sum;
+            index = i;
+        }
+    }
+
+    *dist = max_sum;
+
+    return index;
+}
+
+int graph_shortest_path(graph_t graph, const int from, const int to, int *arr, int *sz)
+{
+    if (arr == NULL || sz == NULL)
+    {
+        return EXIT_FAILURE;
+    }
+
+    if (from > graph->sz || to > graph->sz)
+    {
+        return EXIT_FAILURE;
+    }
+
+    int cur_sz = 0;
+    int cur_city = from;
+    arr[cur_sz++] = cur_city;
+
+    matrix_t *matrix = graph_shortest_paths_paths(graph);
+
+    if (matrix == NULL)
+    {
+        fprintf(stderr, "Error occurred\n");
+        return -1;
+    }
+
+    while (cur_city != to)
+    {
+        cur_city = matrix->values[cur_city][to];
+        arr[cur_sz++] = cur_city;
+    }
+
+    *sz = cur_sz;
+
+    return EXIT_SUCCESS;
+}
+
+int get_num_cities(graph_t graph)
+{
+    return graph->sz;
+}
+
+void graph_reconstruct_paths(graph_t graph, const int city)
+{
+    for (int i = 0; i < graph->sz; i++)
+    {
+        if (i != city)
+        {
+            int path[100], lng;
+
+            graph_shortest_path(graph, city, i, path, &lng);
+
+            printf("Path from city %d to %d: %d", city + 1, i + 1, city + 1);
+
+            for (int j = 1; j < lng; j++)
+                printf(" -> %d", path[j] + 1);
+
+            printf("\n");
+        }
+    }
 }
 
 static void generate_graphviz(FILE *file, graph_t graph)
